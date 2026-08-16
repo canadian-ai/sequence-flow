@@ -1,0 +1,24 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "sequence-diagram-demo",
+  "title": "Sequence Diagram Demo",
+  "description": "Example page showing the sequence diagram with a live Mermaid editor and multiple sample diagrams.",
+  "registryDependencies": [
+    "./sequence-diagram.json"
+  ],
+  "files": [
+    {
+      "path": "components/demo/examples.ts",
+      "content": "export const girlChart = `sequenceDiagram\n    participant B as Browser\n    box Server Tier\n    participant W as Web Server\n    participant D as Database Server\n    end\n    B->>W: HTTP GET Request\n    W->>+D: SQL Command\n    Note over D: Query planner\n    D-->>-W: Result Set\n    W-->>B: HTTP Response`\n\nexport const authChart = `sequenceDiagram\n    actor U as User\n    participant A as App\n    participant Auth as Auth Service\n    U->>A: Submit credentials\n    A->>+Auth: Verify(email, password)\n    Auth->>Auth: Hash + compare\n    Auth-->>-A: Session token\n    A-->>U: Redirect to dashboard`\n\nexport const pipelineChart = `sequenceDiagram\n    participant C as Client\n    participant Q as Queue\n    participant Wk as Worker\n    C->>Q: Enqueue job\n    Note right of Q: Buffered\n    Q->>+Wk: Dispatch\n    Wk->>Wk: Process batch\n    Wk-->>-Q: Ack`\n\nexport const examples = [\n  { id: \"girl\", label: \"Request lifecycle\", chart: girlChart },\n  { id: \"auth\", label: \"Authentication\", chart: authChart },\n  { id: \"pipeline\", label: \"Job pipeline\", chart: pipelineChart },\n] as const\n",
+      "type": "registry:component",
+      "target": "components/sequence-diagram-demo/examples.ts"
+    },
+    {
+      "path": "components/demo/playground.tsx",
+      "content": "\"use client\"\n\nimport { useState } from \"react\"\n\nimport { cn } from \"@/lib/utils\"\nimport { SequenceDiagram } from \"@/components/ui/sequence-diagram\"\n\nimport { examples } from \"./examples\"\n\nexport function Playground() {\n  const [activeId, setActiveId] = useState(examples[0].id)\n  const active = examples.find((e) => e.id === activeId) ?? examples[0]\n  const [chart, setChart] = useState(active.chart)\n\n  function selectExample(id: (typeof examples)[number][\"id\"]) {\n    const next = examples.find((e) => e.id === id) ?? examples[0]\n    setActiveId(id)\n    setChart(next.chart)\n  }\n\n  return (\n    <div className=\"grid gap-4 lg:grid-cols-[minmax(0,360px)_1fr]\">\n      <div className=\"flex flex-col gap-3\">\n        <div className=\"flex flex-wrap gap-1.5\">\n          {examples.map((example) => (\n            <button\n              key={example.id}\n              type=\"button\"\n              onClick={() => selectExample(example.id)}\n              className={cn(\n                \"rounded-md border px-3 py-1.5 text-xs font-medium transition-colors\",\n                example.id === activeId\n                  ? \"border-transparent bg-primary text-primary-foreground\"\n                  : \"border-border bg-card text-muted-foreground hover:text-foreground\",\n              )}\n            >\n              {example.label}\n            </button>\n          ))}\n        </div>\n        <div className=\"flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-card\">\n          <div className=\"flex items-center justify-between border-b border-border px-3 py-2\">\n            <span className=\"font-mono text-xs text-muted-foreground\">\n              diagram.mmd\n            </span>\n            <span className=\"text-[10px] uppercase tracking-wider text-muted-foreground\">\n              Mermaid syntax\n            </span>\n          </div>\n          <textarea\n            value={chart}\n            onChange={(event) => setChart(event.target.value)}\n            spellCheck={false}\n            aria-label=\"Sequence diagram source\"\n            className=\"min-h-[280px] flex-1 resize-none bg-transparent p-3 font-mono text-xs leading-relaxed text-foreground outline-none\"\n          />\n        </div>\n      </div>\n\n      <div className=\"h-[440px] overflow-hidden rounded-lg border border-border bg-card lg:h-auto lg:min-h-[440px]\">\n        <SequenceDiagram chart={chart} className=\"size-full\" />\n      </div>\n    </div>\n  )\n}\n",
+      "type": "registry:component",
+      "target": "components/sequence-diagram-demo/playground.tsx"
+    }
+  ],
+  "type": "registry:block"
+}

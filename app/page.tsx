@@ -1,47 +1,112 @@
+import Link from "next/link"
+
+import { SequenceDiagram } from "@/components/ui/sequence-diagram"
+import { Playground } from "@/components/demo/playground"
+import { girlChart } from "@/components/demo/examples"
+
+const features = [
+  {
+    title: "Mermaid syntax",
+    body: "Author diagrams with the sequenceDiagram grammar you already know. No node/edge wiring.",
+  },
+  {
+    title: "Activation bars",
+    body: "Use +/- suffixes or activate/deactivate to render execution bars on a lifeline.",
+  },
+  {
+    title: "Return messages",
+    body: "Dashed arrows (-->>) render as return/response messages with open arrowheads.",
+  },
+  {
+    title: "Notes & badges",
+    body: "Note left/right/over places annotated callouts anchored to participants.",
+  },
+  {
+    title: "Self-messages",
+    body: "A message from a participant to itself renders as a looping arrow.",
+  },
+  {
+    title: "Grouping boxes",
+    body: "Wrap participants in a box to render a labeled tier around their lifelines.",
+  },
+]
+
+const install =
+  "npx shadcn@latest add https://your-registry.com/r/sequence-diagram.json"
+
 export default function Page() {
   return (
-    <main
-      style={{
-        colorScheme: 'light dark',
-        position: 'relative',
-        display: 'flex',
-        minHeight: '100vh',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'light-dark(#fff, #000)',
-        color: 'light-dark(#000, #fff)',
-      }}
-    >
-      <svg
-        aria-hidden="true"
-        style={{ width: 80, height: 80 }}
-        width={80}
-        height={80}
-        fill="none"
-        viewBox="0 0 20 20"
-        xmlns="http://www.w3.org/2000/svg"
-        stroke="currentColor"
-        strokeWidth="0.5"
-      >
-        <path
-          d="M14.2 14.2H17V6.9375C17 4.76288 15.2371 3 13.0625 3H5.8V5.8M14.2 14.2V7.79063L7.79062 14.2H14.2ZM14.2 14.2V17H6.9375C4.76288 17 3 15.2371 3 13.0625V5.8H5.8M5.8 5.8V12.2313L12.2313 5.8H5.8Z"
-          strokeLinejoin="round"
-        />
-      </svg>
-      <p
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: 'calc(50% + 56px)',
-          transform: 'translateX(-50%)',
-          whiteSpace: 'nowrap',
-          fontSize: '14px',
-          fontWeight: 500,
-          color: 'light-dark(#71717a, #a1a1aa)',
-        }}
-      >
-        Your v0 generation will show here.
-      </p>
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 py-16">
+      <header className="flex flex-col gap-6">
+        <div className="flex items-center gap-2">
+          <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-xs text-muted-foreground">
+            react-flow
+          </span>
+          <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-xs text-muted-foreground">
+            shadcn registry
+          </span>
+        </div>
+        <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+          Sequence diagrams for React Flow
+        </h1>
+        <p className="max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">
+          A lightweight, read-only sequence diagram component. Write Mermaid
+          syntax, get an interactive React Flow canvas with pan, zoom, and hover
+          highlighting. Built for the GIRL documentation, useful anywhere.
+        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <code className="truncate rounded-md border border-border bg-card px-3 py-2 font-mono text-sm text-foreground">
+            {install}
+          </code>
+          <Link
+            href="https://github.com/xyflow/xyflow"
+            className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            React Flow docs
+          </Link>
+        </div>
+      </header>
+
+      <section className="flex flex-col gap-4">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            GIRL request lifecycle
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            Drag to pan, scroll the controls to zoom, hover a message
+          </span>
+        </div>
+        <div className="h-[520px] overflow-hidden rounded-xl border border-border bg-card">
+          <SequenceDiagram chart={girlChart} className="size-full" />
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          Live playground
+        </h2>
+        <Playground />
+      </section>
+
+      <section className="flex flex-col gap-6">
+        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+          What it supports
+        </h2>
+        <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((feature) => (
+            <div key={feature.title} className="flex flex-col gap-2 bg-card p-6">
+              <h3 className="font-medium text-foreground">{feature.title}</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {feature.body}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <footer className="border-t border-border pt-8 text-sm text-muted-foreground">
+        Open source. Distributed on the shadcn registry.
+      </footer>
     </main>
   )
 }

@@ -13,11 +13,11 @@ export function SeqGroupNode({ data }: NodeProps) {
   const d = data as { label: string; width: number; height: number }
   return (
     <div
-      className="rounded-lg border border-dashed border-border bg-seq-group/60"
+      className="relative rounded-lg border border-dashed border-border bg-seq-group/40"
       style={{ width: d.width, height: d.height }}
     >
       {d.label ? (
-        <span className="absolute left-3 top-2 text-xs font-medium tracking-wide text-muted-foreground">
+        <span className="absolute left-2 top-2 rounded bg-card px-2 py-0.5 text-xs font-medium tracking-wide text-muted-foreground shadow-sm">
           {d.label}
         </span>
       ) : null}
