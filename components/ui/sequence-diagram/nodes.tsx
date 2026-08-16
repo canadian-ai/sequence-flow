@@ -124,12 +124,17 @@ export function SeqActorNode({ data }: NodeProps) {
   const active = activeParticipants.has(d.participant)
   const directHover = hoveredParticipant === d.participant
   const highlighted = active || directHover
+  // The same participant renders a top and (optionally) a bottom actor box that
+  // share hover state. Only the top box owns the tooltip, so hovering either one
+  // doesn't pop the explanation twice.
+  const isBottom = d.placement === "bottom"
+  const tooltipText = isBottom ? undefined : d.explanation
 
   return (
-    <SeqTooltip text={d.explanation} visible={directHover} placement={d.placement}>
+    <SeqTooltip text={tooltipText} visible={directHover} placement="top">
       <div
-        role={d.explanation ? "button" : undefined}
-        tabIndex={d.explanation ? 0 : undefined}
+        role={tooltipText ? "button" : undefined}
+        tabIndex={tooltipText ? 0 : undefined}
         className={cn(
           "flex h-[52px] cursor-default items-center justify-center gap-2 border bg-card px-3 text-center transition-colors",
           highlighted ? "border-seq-accent ring-1 ring-seq-accent" : "border-border",

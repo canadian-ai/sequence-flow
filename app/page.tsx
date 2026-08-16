@@ -52,7 +52,14 @@ export default function Page() {
         <p className="max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">
           A lightweight, read-only sequence diagram component. Write Mermaid
           syntax, get an interactive React Flow canvas with pan, zoom, and hover
-          highlighting. Built for the GIRL documentation, useful anywhere.
+          highlighting. Built for the{" "}
+          <Link
+            href="https://girl.canadian-ai.ca"
+            className="text-foreground underline underline-offset-4 hover:text-muted-foreground"
+          >
+            GIRL documentation
+          </Link>
+          , useful anywhere.
         </p>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <code className="truncate border border-border bg-card px-3 py-2 font-mono text-sm text-foreground">
@@ -68,6 +75,18 @@ export default function Page() {
       </header>
 
       <section className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            Live editor
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            Paste Mermaid, recolor it, then export the code or a PNG
+          </span>
+        </div>
+        <Playground />
+      </section>
+
+      <section className="flex flex-col gap-4">
         <div className="flex items-baseline justify-between gap-4">
           <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
             GIRL request lifecycle
@@ -79,18 +98,6 @@ export default function Page() {
         <div className="h-[520px] overflow-hidden border border-border bg-card">
           <SequenceDiagram chart={girlChart} className="size-full" />
         </div>
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-            Live editor
-          </h2>
-          <span className="text-xs text-muted-foreground">
-            Paste Mermaid, recolor it, then export the code or a PNG
-          </span>
-        </div>
-        <Playground />
       </section>
 
       <section className="flex flex-col gap-6">
