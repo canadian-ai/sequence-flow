@@ -2,6 +2,7 @@ export const girlChart = `sequenceDiagram
     %% tooltip Browser: The client. Renders the page and initiates every request in this flow.
     participant B as Browser
     box Server Tier
+    %% tooltip Server Tier: Everything inside this boundary runs on infrastructure we control — no direct client access.
     %% tooltip Web Server: Stateless request handler. Never talks to the database directly outside a transaction.
     participant W as Web Server
     %% tooltip Database Server: Owns durable state. Only reachable from inside the server tier.

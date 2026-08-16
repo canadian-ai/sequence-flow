@@ -113,6 +113,7 @@ const SequenceDiagramInner = forwardRef<SequenceDiagramHandle, SequenceDiagramPr
   const { getNodes } = useReactFlow()
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null)
   const [hoveredParticipant, setHoveredParticipant] = useState<string | null>(null)
+  const [hoveredBox, setHoveredBox] = useState<string | null>(null)
   const [activeParticipants, setActiveParticipants] = useState<Set<string>>(
     () => new Set(),
   )
@@ -174,14 +175,16 @@ const SequenceDiagramInner = forwardRef<SequenceDiagramHandle, SequenceDiagramPr
     () => ({
       hoveredEdge,
       hoveredParticipant,
+      hoveredBox,
       activeParticipants,
       setHover: (edge: string | null, participants: string[]) => {
         setHoveredEdge(edge)
         setActiveParticipants(new Set(participants))
       },
       setParticipantHover: setHoveredParticipant,
+      setBoxHover: setHoveredBox,
     }),
-    [hoveredEdge, hoveredParticipant, activeParticipants],
+    [hoveredEdge, hoveredParticipant, hoveredBox, activeParticipants],
   )
 
   return (
@@ -205,6 +208,11 @@ const SequenceDiagramInner = forwardRef<SequenceDiagramHandle, SequenceDiagramPr
           panOnScroll
           zoomOnScroll={false}
           className="bg-background"
+          // React Flow only enables pointer-events on a node's DOM wrapper when the
+          // node is selectable/draggable or a top-level onNode* handler is set. Since
+          // our nodes are neither, a harmless no-op handler here restores real hover
+          // (mouseenter/mouseleave) on every custom node — group boxes, actors, etc.
+          onNodeMouseEnter={() => {}}
         >
           {background ? (
             <Background

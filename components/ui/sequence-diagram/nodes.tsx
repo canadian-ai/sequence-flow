@@ -9,18 +9,45 @@ import { useSequenceHover } from "./context"
 import type { HandleSpec } from "./layout"
 import { SeqTooltip } from "./tooltip"
 
-/** Grouping box drawn behind a set of participants. */
+/** Grouping box drawn behind a set of participants. Hover reveals its explanation, if any. */
 export function SeqGroupNode({ data }: NodeProps) {
-  const d = data as { label: string; width: number; height: number }
+  const d = data as {
+    boxId: string
+    label: string
+    width: number
+    height: number
+    explanation?: string
+  }
+  const { hoveredBox, setBoxHover } = useSequenceHover()
+  const hovered = hoveredBox === d.boxId
+
   return (
     <div
-      className="relative border border-dashed border-border bg-seq-group/[0.06]"
+      role={d.explanation ? "button" : undefined}
+      tabIndex={d.explanation ? 0 : undefined}
+      className={cn(
+        "relative cursor-default border bg-seq-group/[0.06] transition-colors",
+        hovered
+          ? "border-solid border-seq-accent bg-seq-accent/[0.08] ring-1 ring-seq-accent"
+          : "border-dashed border-border",
+      )}
       style={{ width: d.width, height: d.height }}
+      onMouseEnter={() => setBoxHover(d.boxId)}
+      onMouseLeave={() => setBoxHover(null)}
+      onFocus={() => setBoxHover(d.boxId)}
+      onBlur={() => setBoxHover(null)}
     >
       {d.label ? (
-        <span className="absolute left-3 -top-3 border border-border bg-card px-2 py-0.5 text-xs font-medium tracking-wide text-muted-foreground">
-          {d.label}
-        </span>
+        <SeqTooltip text={d.explanation} visible={hovered} placement="top">
+          <span
+            className={cn(
+              "absolute left-3 -top-3 border bg-card px-2 py-0.5 text-xs font-medium tracking-wide transition-colors",
+              hovered ? "border-seq-accent text-seq-accent" : "border-border text-muted-foreground",
+            )}
+          >
+            {d.label}
+          </span>
+        </SeqTooltip>
       ) : null}
     </div>
   )
