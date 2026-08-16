@@ -28,7 +28,7 @@ export function Playground() {
               type="button"
               onClick={() => selectExample(example.id)}
               className={cn(
-                "rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
+                "border px-3 py-1.5 text-xs font-medium transition-colors",
                 example.id === activeId
                   ? "border-transparent bg-primary text-primary-foreground"
                   : "border-border bg-card text-muted-foreground hover:text-foreground",
@@ -38,7 +38,7 @@ export function Playground() {
             </button>
           ))}
         </div>
-        <div className="flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-card">
+        <div className="flex min-h-0 flex-1 flex-col border border-border bg-card">
           <div className="flex items-center justify-between border-b border-border px-3 py-2">
             <span className="font-mono text-xs text-muted-foreground">
               diagram.mmd
@@ -57,7 +57,7 @@ export function Playground() {
         </div>
       </div>
 
-      <div className="h-[440px] overflow-hidden rounded-lg border border-border bg-card lg:h-auto lg:min-h-[440px]">
+      <div className="h-[440px] overflow-hidden border border-border bg-card lg:h-auto lg:min-h-[440px]">
         <SequenceDiagram chart={chart} className="size-full" />
       </div>
     </div>

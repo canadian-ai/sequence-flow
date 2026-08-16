@@ -39,14 +39,14 @@ export default function Page() {
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 py-16">
       <header className="flex flex-col gap-6">
         <div className="flex items-center gap-2">
-          <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-xs text-muted-foreground">
+          <span className="border border-border px-2.5 py-0.5 font-mono text-xs text-muted-foreground">
             react-flow
           </span>
-          <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-xs text-muted-foreground">
+          <span className="border border-border px-2.5 py-0.5 font-mono text-xs text-muted-foreground">
             shadcn registry
           </span>
         </div>
-        <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+        <h1 className="text-balance font-serif text-4xl font-bold tracking-tight sm:text-5xl">
           Sequence diagrams for React Flow
         </h1>
         <p className="max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">
@@ -55,7 +55,7 @@ export default function Page() {
           highlighting. Built for the GIRL documentation, useful anywhere.
         </p>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <code className="truncate rounded-md border border-border bg-card px-3 py-2 font-mono text-sm text-foreground">
+          <code className="truncate border border-border bg-card px-3 py-2 font-mono text-sm text-foreground">
             {install}
           </code>
           <Link
@@ -73,10 +73,10 @@ export default function Page() {
             GIRL request lifecycle
           </h2>
           <span className="text-xs text-muted-foreground">
-            Drag to pan, scroll the controls to zoom, hover a message
+            Drag to pan, hover a box or message for details
           </span>
         </div>
-        <div className="h-[520px] overflow-hidden rounded-xl border border-border bg-card">
+        <div className="h-[520px] overflow-hidden border border-border bg-card">
           <SequenceDiagram chart={girlChart} className="size-full" />
         </div>
       </section>
@@ -92,7 +92,7 @@ export default function Page() {
         <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
           What it supports
         </h2>
-        <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-px overflow-hidden border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
             <div key={feature.title} className="flex flex-col gap-2 bg-card p-6">
               <h3 className="font-medium text-foreground">{feature.title}</h3>

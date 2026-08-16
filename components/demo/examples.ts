@@ -1,13 +1,16 @@
 export const girlChart = `sequenceDiagram
+    %% tooltip Browser: The client. Renders the page and initiates every request in this flow.
     participant B as Browser
     box Server Tier
+    %% tooltip Web Server: Stateless request handler. Never talks to the database directly outside a transaction.
     participant W as Web Server
+    %% tooltip Database Server: Owns durable state. Only reachable from inside the server tier.
     participant D as Database Server
     end
     B->>W: HTTP GET Request
-    W->>+D: SQL Command
+    W->>+D: SQL Command %% tooltip: Issued inside an open connection; the '+' activates the database's execution bar.
     Note over D: Query planner
-    D-->>-W: Result Set
+    D-->>-W: Result Set %% tooltip: Dashed return arrow — the '-' closes the activation opened above.
     W-->>B: HTTP Response`
 
 export const authChart = `sequenceDiagram

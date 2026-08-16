@@ -7,17 +7,18 @@ import { cn } from "@/lib/utils"
 
 import { useSequenceHover } from "./context"
 import type { HandleSpec } from "./layout"
+import { SeqTooltip } from "./tooltip"
 
 /** Grouping box drawn behind a set of participants. */
 export function SeqGroupNode({ data }: NodeProps) {
   const d = data as { label: string; width: number; height: number }
   return (
     <div
-      className="relative rounded-lg border border-dashed border-border bg-seq-group/40"
+      className="relative border border-dashed border-border bg-seq-group/[0.06]"
       style={{ width: d.width, height: d.height }}
     >
       {d.label ? (
-        <span className="absolute left-2 top-2 rounded bg-card px-2 py-0.5 text-xs font-medium tracking-wide text-muted-foreground shadow-sm">
+        <span className="absolute left-2 top-2 border border-border bg-card px-2 py-0.5 text-xs font-medium tracking-wide text-muted-foreground">
           {d.label}
         </span>
       ) : null}
@@ -71,7 +72,7 @@ export function SeqActivationNode({ data }: NodeProps) {
   return (
     <div
       className={cn(
-        "rounded-[2px] border transition-colors",
+        "border transition-colors",
         active
           ? "border-seq-accent bg-seq-accent/25"
           : "border-seq-accent/40 bg-seq-activation",
@@ -81,31 +82,45 @@ export function SeqActivationNode({ data }: NodeProps) {
   )
 }
 
-/** Participant head box (or actor glyph). */
+/** Participant head box (or actor glyph). Hover reveals its explanation, if any. */
 export function SeqActorNode({ data }: NodeProps) {
   const d = data as {
     participant: string
     label: string
     actor: boolean
     width: number
+    explanation?: string
+    placement?: "top" | "bottom"
   }
-  const { activeParticipants, hoveredEdge } = useSequenceHover()
+  const { activeParticipants, hoveredEdge, hoveredParticipant, setParticipantHover } =
+    useSequenceHover()
   const active = activeParticipants.has(d.participant)
+  const directHover = hoveredParticipant === d.participant
+  const highlighted = active || directHover
+
   return (
-    <div
-      className={cn(
-        "flex h-[52px] items-center justify-center gap-2 rounded-md border bg-card px-3 text-center shadow-sm transition-colors",
-        active ? "border-seq-accent ring-1 ring-seq-accent" : "border-border",
-      )}
-      style={{ width: d.width, opacity: hoveredEdge && !active ? 0.45 : 1 }}
-    >
-      {d.actor ? (
-        <User className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-      ) : null}
-      <span className="text-sm font-medium leading-tight text-card-foreground text-balance">
-        {d.label}
-      </span>
-    </div>
+    <SeqTooltip text={d.explanation} visible={directHover} placement={d.placement}>
+      <div
+        role={d.explanation ? "button" : undefined}
+        tabIndex={d.explanation ? 0 : undefined}
+        className={cn(
+          "flex h-[52px] cursor-default items-center justify-center gap-2 border bg-card px-3 text-center transition-colors",
+          highlighted ? "border-seq-accent ring-1 ring-seq-accent" : "border-border",
+        )}
+        style={{ width: d.width, opacity: hoveredEdge && !active ? 0.45 : 1 }}
+        onMouseEnter={() => setParticipantHover(d.participant)}
+        onMouseLeave={() => setParticipantHover(null)}
+        onFocus={() => setParticipantHover(d.participant)}
+        onBlur={() => setParticipantHover(null)}
+      >
+        {d.actor ? (
+          <User className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+        ) : null}
+        <span className="text-sm font-medium leading-tight text-card-foreground text-balance">
+          {d.label}
+        </span>
+      </div>
+    </SeqTooltip>
   )
 }
 
@@ -114,7 +129,7 @@ export function SeqNoteNode({ data }: NodeProps) {
   const d = data as { text: string; width: number; height: number }
   return (
     <div
-      className="flex items-center justify-center rounded-sm border border-border bg-muted px-3 py-2 text-center text-xs leading-snug text-muted-foreground shadow-sm"
+      className="flex items-center justify-center border border-border bg-muted px-3 py-2 text-center text-xs leading-snug text-muted-foreground"
       style={{ width: d.width, minHeight: d.height }}
     >
       {d.text}

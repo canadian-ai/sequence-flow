@@ -1,0 +1,13 @@
+/**
+ * React Flow renders `.react-flow__edges` (the SVG edge paths) and
+ * `.react-flow__edgelabel-renderer` (the portal used by EdgeLabelRenderer)
+ * as unstyled siblings inside the viewport. Neither sets an explicit
+ * z-index, so with `z-index: auto` browsers stack them by DOM order —
+ * which places edge paths above edge labels and cuts message lines
+ * straight through the label text. Giving the label-renderer layer an
+ * explicit z-index lifts it above the (auto = level 0) edges layer,
+ * regardless of DOM order, while staying below nodes/controls.
+ */
+.react-flow__edgelabel-renderer {
+  z-index: 1000;
+}

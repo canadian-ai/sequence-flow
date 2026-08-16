@@ -1,6 +1,7 @@
 "use client"
 
 import "@xyflow/react/dist/base.css"
+import "./sequence-diagram.css"
 
 import { useMemo, useState } from "react"
 import {
@@ -95,6 +96,7 @@ function SequenceDiagramInner({
   showBottomActors,
 }: SequenceDiagramProps) {
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null)
+  const [hoveredParticipant, setHoveredParticipant] = useState<string | null>(null)
   const [activeParticipants, setActiveParticipants] = useState<Set<string>>(
     () => new Set(),
   )
@@ -107,13 +109,15 @@ function SequenceDiagramInner({
   const hoverValue = useMemo(
     () => ({
       hoveredEdge,
+      hoveredParticipant,
       activeParticipants,
       setHover: (edge: string | null, participants: string[]) => {
         setHoveredEdge(edge)
         setActiveParticipants(new Set(participants))
       },
+      setParticipantHover: setHoveredParticipant,
     }),
-    [hoveredEdge, activeParticipants],
+    [hoveredEdge, hoveredParticipant, activeParticipants],
   )
 
   return (

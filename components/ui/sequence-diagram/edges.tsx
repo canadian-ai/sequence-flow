@@ -5,6 +5,7 @@ import { BaseEdge, EdgeLabelRenderer, type EdgeProps } from "@xyflow/react"
 import { cn } from "@/lib/utils"
 
 import { useSequenceHover } from "./context"
+import { SeqTooltip } from "./tooltip"
 import type { ArrowHead, ArrowLine } from "./types"
 
 const MARKER: Record<ArrowHead, string> = {
@@ -21,6 +22,7 @@ interface MessageData {
   self: boolean
   from: string
   to: string
+  explanation?: string
 }
 
 export function SeqMessageEdge({
@@ -73,20 +75,22 @@ export function SeqMessageEdge({
       <EdgeLabelRenderer>
         {d.text ? (
           <div
-            className={cn(
-              "nodrag nopan pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2 cursor-default rounded-md px-2 py-0.5 text-xs font-medium shadow-sm transition-all",
-              "bg-seq-accent text-seq-accent-foreground",
-              hovered && "ring-2 ring-seq-accent/40",
-            )}
-            style={{
-              left: labelX,
-              top: labelY,
-              opacity: dimmed ? 0.4 : 1,
-            }}
+            className="nodrag nopan pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2"
+            style={{ left: labelX, top: labelY, opacity: dimmed ? 0.4 : 1 }}
             onMouseEnter={onEnter}
             onMouseLeave={onLeave}
           >
-            {d.text}
+            <SeqTooltip text={d.explanation} visible={hovered}>
+              <div
+                className={cn(
+                  "cursor-default border px-2 py-0.5 text-xs font-medium transition-all",
+                  "border-seq-accent bg-seq-accent text-seq-accent-foreground",
+                  hovered && "ring-2 ring-seq-accent/40",
+                )}
+              >
+                {d.text}
+              </div>
+            </SeqTooltip>
           </div>
         ) : null}
         {/* Invisible hit target over the line for hover when there is no label. */}
