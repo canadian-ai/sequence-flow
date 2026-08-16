@@ -16,6 +16,8 @@ export interface SeqBox {
   id: string
   label: string
   participantIds: string[]
+  /** Shown in a hover tooltip on the container. Set via `%% tooltip Label: text`. */
+  explanation?: string
 }
 
 export interface SeqMessage {
