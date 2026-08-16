@@ -1,7 +1,7 @@
 "use client"
 
 import { type CSSProperties, useRef, useState } from "react"
-import { Download, ImageDown, RotateCcw } from "lucide-react"
+import { Check, Download, ImageDown, Moon, RotateCcw, SlidersHorizontal, Sun } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {
@@ -12,14 +12,15 @@ import {
 import { getContrastColor } from "./color-utils"
 import { downloadTextFile, minifyMermaid } from "./minify-mermaid"
 import { examples } from "./examples"
+import { CUSTOM_THEME_ID, DEFAULT_THEME, THEMES, type ColorMode, type ThemeColors } from "./themes"
 
-type ColorKey = "accent" | "activation" | "lifeline" | "background"
+type ColorKey = keyof ThemeColors
 
-const COLOR_FIELDS: { key: ColorKey; label: string; defaultValue: string }[] = [
-  { key: "accent", label: "Accent", defaultValue: "#c1440e" },
-  { key: "activation", label: "Activation", defaultValue: "#f0dcd2" },
-  { key: "lifeline", label: "Lifeline", defaultValue: "#b3b3b3" },
-  { key: "background", label: "Background", defaultValue: "#ffffff" },
+const COLOR_FIELDS: { key: ColorKey; label: string }[] = [
+  { key: "accent", label: "Accent" },
+  { key: "activation", label: "Activation" },
+  { key: "lifeline", label: "Lifeline" },
+  { key: "background", label: "Background" },
 ]
 
 type ExampleId = (typeof examples)[number]["id"]
@@ -28,8 +29,17 @@ export function Playground() {
   const [activeId, setActiveId] = useState<ExampleId>(examples[0].id)
   const active = examples.find((e) => e.id === activeId) ?? examples[0]
   const [chart, setChart] = useState<string>(active.chart)
+  const [mode, setMode] = useState<ColorMode>("light")
+  const [themeId, setThemeId] = useState<string>(DEFAULT_THEME.id)
   const [colors, setColors] = useState<Partial<Record<ColorKey, string>>>({})
   const diagramRef = useRef<SequenceDiagramHandle>(null)
+
+  const isCustom = themeId === CUSTOM_THEME_ID
+  const activeTheme = THEMES.find((t) => t.id === themeId) ?? DEFAULT_THEME
+  // Custom mode starts from the Default theme's palette for this mode, then
+  // layers any individually-picked colors on top.
+  const baseColors = isCustom ? DEFAULT_THEME[mode] : activeTheme[mode]
+  const resolvedColors: ThemeColors = isCustom ? { ...baseColors, ...colors } : baseColors
 
   function selectExample(id: (typeof examples)[number]["id"]) {
     const next = examples.find((e) => e.id === id) ?? examples[0]
@@ -37,12 +47,20 @@ export function Playground() {
     setChart(next.chart)
   }
 
+  function selectTheme(id: string) {
+    setThemeId(id)
+    setColors({})
+  }
+
   function setColor(key: ColorKey, value: string) {
+    setThemeId(CUSTOM_THEME_ID)
     setColors((prev) => ({ ...prev, [key]: value }))
   }
 
   function resetColors() {
+    setThemeId(DEFAULT_THEME.id)
     setColors({})
+    setMode("light")
   }
 
   function handleDownloadCode() {
@@ -54,25 +72,17 @@ export function Playground() {
   }
 
   const diagramStyle: CSSProperties = {
-    ...(colors.accent
-      ? {
-          ["--seq-accent" as string]: colors.accent,
-          ["--seq-accent-foreground" as string]: getContrastColor(colors.accent),
-        }
-      : {}),
-    ...(colors.activation ? { ["--seq-activation" as string]: colors.activation } : {}),
-    ...(colors.lifeline ? { ["--seq-lifeline" as string]: colors.lifeline } : {}),
-    ...(colors.background
-      ? {
-          ["--background" as string]: colors.background,
-          ["--card" as string]: colors.background,
-          ["--foreground" as string]: getContrastColor(colors.background),
-          ["--card-foreground" as string]: getContrastColor(colors.background),
-        }
-      : {}),
+    ["--seq-accent" as string]: resolvedColors.accent,
+    ["--seq-accent-foreground" as string]: getContrastColor(resolvedColors.accent),
+    ["--seq-activation" as string]: resolvedColors.activation,
+    ["--seq-lifeline" as string]: resolvedColors.lifeline,
+    ["--background" as string]: resolvedColors.background,
+    ["--card" as string]: resolvedColors.background,
+    ["--foreground" as string]: getContrastColor(resolvedColors.background),
+    ["--card-foreground" as string]: getContrastColor(resolvedColors.background),
   }
 
-  const hasCustomColors = Object.keys(colors).length > 0
+  const hasCustomization = themeId !== DEFAULT_THEME.id || mode !== "light"
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,360px)_1fr]">
@@ -116,45 +126,147 @@ export function Playground() {
         <div className="flex flex-col gap-3 border border-border bg-card p-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Colors
+              Theme
             </span>
-            {hasCustomColors ? (
-              <button
-                type="button"
-                onClick={resetColors}
-                className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+            <div className="flex items-center gap-2">
+              {hasCustomization ? (
+                <button
+                  type="button"
+                  onClick={resetColors}
+                  className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <RotateCcw className="size-3" aria-hidden />
+                  Reset
+                </button>
+              ) : null}
+              <div
+                role="group"
+                aria-label="Preview color mode"
+                className="flex border border-border"
               >
-                <RotateCcw className="size-3" aria-hidden />
-                Reset
-              </button>
-            ) : null}
+                {(["light", "dark"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    aria-pressed={mode === m}
+                    onClick={() => setMode(m)}
+                    className={cn(
+                      "flex items-center gap-1 px-2 py-1 text-[10px] font-medium uppercase tracking-wider transition-colors",
+                      mode === m
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {m === "light" ? (
+                      <Sun className="size-3" aria-hidden />
+                    ) : (
+                      <Moon className="size-3" aria-hidden />
+                    )}
+                    <span className="sr-only">{m} mode</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-          <div className="grid grid-cols-4 gap-2">
-            {COLOR_FIELDS.map((field) => (
-              <label
-                key={field.key}
-                className="flex flex-col items-center gap-1.5 text-center"
-              >
-                <span className="relative flex size-8 items-center justify-center border border-border">
-                  <input
-                    type="color"
-                    aria-label={`${field.label} color`}
-                    value={colors[field.key] ?? field.defaultValue}
-                    onChange={(event) => setColor(field.key, event.target.value)}
-                    className="absolute inset-0 size-full cursor-pointer opacity-0"
-                  />
+
+          <div className="grid grid-cols-3 gap-1.5">
+            {THEMES.map((theme) => {
+              const swatch = theme[mode]
+              const selected = themeId === theme.id
+              return (
+                <button
+                  key={theme.id}
+                  type="button"
+                  onClick={() => selectTheme(theme.id)}
+                  aria-pressed={selected}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 border p-1.5 transition-colors",
+                    selected ? "border-foreground" : "border-border hover:border-muted-foreground",
+                  )}
+                >
                   <span
-                    className="pointer-events-none size-5"
-                    style={{ backgroundColor: colors[field.key] ?? "transparent" }}
+                    className="relative flex h-6 w-full items-center justify-center gap-0.5 border border-border"
+                    style={{ backgroundColor: swatch.background }}
+                  >
+                    <span
+                      className="size-2"
+                      style={{ backgroundColor: swatch.accent }}
+                      aria-hidden
+                    />
+                    <span
+                      className="size-2 border"
+                      style={{ backgroundColor: swatch.activation, borderColor: swatch.lifeline }}
+                      aria-hidden
+                    />
+                    <span
+                      className="size-2"
+                      style={{ backgroundColor: swatch.lifeline }}
+                      aria-hidden
+                    />
+                    {selected ? (
+                      <Check
+                        className="absolute -right-1 -top-1 size-3 rounded-full bg-foreground p-0.5 text-background"
+                        aria-hidden
+                      />
+                    ) : null}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">{theme.label}</span>
+                </button>
+              )
+            })}
+            <button
+              type="button"
+              onClick={() => setThemeId(CUSTOM_THEME_ID)}
+              aria-pressed={isCustom}
+              className={cn(
+                "flex flex-col items-center gap-1.5 border p-1.5 transition-colors",
+                isCustom ? "border-foreground" : "border-border hover:border-muted-foreground",
+              )}
+            >
+              <span
+                className="relative flex h-6 w-full items-center justify-center border border-dashed border-border"
+                style={{ backgroundColor: resolvedColors.background }}
+              >
+                <SlidersHorizontal className="size-3 text-muted-foreground" aria-hidden />
+                {isCustom ? (
+                  <Check
+                    className="absolute -right-1 -top-1 size-3 rounded-full bg-foreground p-0.5 text-background"
                     aria-hidden
                   />
-                </span>
-                <span className="text-[10px] text-muted-foreground">
-                  {field.label}
-                </span>
-              </label>
-            ))}
+                ) : null}
+              </span>
+              <span className="text-[10px] text-muted-foreground">Custom</span>
+            </button>
           </div>
+
+          {isCustom ? (
+            <div className="grid grid-cols-4 gap-2 border-t border-border pt-3">
+              {COLOR_FIELDS.map((field) => (
+                <label
+                  key={field.key}
+                  className="flex flex-col items-center gap-1.5 text-center"
+                >
+                  <span className="relative flex size-8 items-center justify-center border border-border">
+                    <input
+                      type="color"
+                      aria-label={`${field.label} color`}
+                      value={colors[field.key] ?? baseColors[field.key]}
+                      onChange={(event) => setColor(field.key, event.target.value)}
+                      className="absolute inset-0 size-full cursor-pointer opacity-0"
+                    />
+                    <span
+                      className="pointer-events-none size-5"
+                      style={{ backgroundColor: colors[field.key] ?? baseColors[field.key] }}
+                      aria-hidden
+                    />
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {field.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-2 gap-2">
