@@ -29,9 +29,38 @@ const ARROWS: ArrowSpec[] = [
 const IGNORED_BLOCK_STARTS =
   /^(loop|alt|else|opt|par|and|critical|option|break|rect|autonumber)\b/i
 
-function stripComment(line: string): string {
-  const i = line.indexOf("%%")
-  return (i === -1 ? line : line.slice(0, i)).trim()
+// `%% tooltip <name>: <text>` on its own line annotates a participant.
+// (Generic non-tooltip `%%` comments are simply discarded by extractTooltip.)
+const PARTICIPANT_TOOLTIP = /^tooltip\s+([^:]+):\s*(.+)$/i
+// Trailing `%% tooltip: <text>` on a message line annotates that message.
+const MESSAGE_TOOLTIP = /^tooltip\s*:\s*(.+)$/i
+
+/**
+ * Strip a `%%` comment from a line. If the comment is a tooltip directive,
+ * extract it instead of discarding it: a standalone `%% tooltip Name: text`
+ * line registers a participant explanation (and is fully consumed), while a
+ * trailing `%% tooltip: text` on a content line yields an explanation for
+ * whatever event that line defines.
+ */
+function extractTooltip(
+  rawLine: string,
+  participantNotes: Map<string, string>,
+): { line: string; explanation?: string; consumed: boolean } {
+  const i = rawLine.indexOf("%%")
+  if (i === -1) return { line: rawLine.trim(), consumed: false }
+  const before = rawLine.slice(0, i).trim()
+  const commentBody = rawLine.slice(i + 2).trim()
+  const participantMatch = commentBody.match(PARTICIPANT_TOOLTIP)
+  if (participantMatch) {
+    participantNotes.set(participantMatch[1].trim().toLowerCase(), participantMatch[2].trim())
+    if (!before) return { line: "", consumed: true }
+    return { line: before, consumed: false }
+  }
+  const messageMatch = commentBody.match(MESSAGE_TOOLTIP)
+  if (messageMatch) {
+    return { line: before, explanation: messageMatch[1].trim(), consumed: false }
+  }
+  return { line: before, consumed: false }
 }
 
 function findArrow(text: string): { spec: ArrowSpec; at: number } | null {
@@ -55,6 +84,7 @@ export function parseSequenceDiagram(input: string): SeqModel {
   const byId = new Map<string, SeqParticipant>()
   const boxes: SeqBox[] = []
   const events: SeqEvent[] = []
+  const participantNotes = new Map<string, string>()
   let title: string | undefined
   let currentBox: SeqBox | null = null
   let eventIndex = 0
@@ -76,7 +106,10 @@ export function parseSequenceDiagram(input: string): SeqModel {
 
   const lines = input.split(/\r?\n/)
   for (const rawLine of lines) {
-    const line = stripComment(rawLine)
+    const tip = extractTooltip(rawLine, participantNotes)
+    if (tip.consumed) continue
+    const line = tip.line
+    const messageExplanation = tip.explanation
     if (!line) continue
 
     const lower = line.toLowerCase()
@@ -204,10 +237,18 @@ export function parseSequenceDiagram(input: string): SeqModel {
         self: from === target,
         activateTarget,
         deactivateSource,
+        explanation: messageExplanation,
       })
       continue
     }
     // Unknown line: ignore for resilience.
+  }
+
+  // Resolve `%% tooltip <name>: text` directives onto participants, matching
+  // by id or display label (case-insensitive).
+  for (const p of participants) {
+    const text = participantNotes.get(p.id.toLowerCase()) ?? participantNotes.get(p.label.toLowerCase())
+    if (text) p.explanation = text
   }
 
   return { title, participants, boxes, events }

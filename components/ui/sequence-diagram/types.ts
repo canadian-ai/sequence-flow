@@ -8,6 +8,8 @@ export interface SeqParticipant {
   /** `actor` keyword renders a person glyph instead of a plain box. */
   actor: boolean
   boxId?: string
+  /** Shown in a hover tooltip on the participant's box. Set via `%% tooltip Name: text`. */
+  explanation?: string
 }
 
 export interface SeqBox {
@@ -29,6 +31,8 @@ export interface SeqMessage {
   activateTarget: boolean
   /** `-` suffix: deactivate the source after this message. */
   deactivateSource: boolean
+  /** Shown in a hover tooltip on the message label. Set via trailing `%% tooltip: text`. */
+  explanation?: string
 }
 
 export interface SeqNote {
