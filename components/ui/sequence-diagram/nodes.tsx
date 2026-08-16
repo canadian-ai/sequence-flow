@@ -18,7 +18,7 @@ export function SeqGroupNode({ data }: NodeProps) {
       style={{ width: d.width, height: d.height }}
     >
       {d.label ? (
-        <span className="absolute left-2 top-2 border border-border bg-card px-2 py-0.5 text-xs font-medium tracking-wide text-muted-foreground">
+        <span className="absolute left-3 -top-3 border border-border bg-card px-2 py-0.5 text-xs font-medium tracking-wide text-muted-foreground">
           {d.label}
         </span>
       ) : null}
