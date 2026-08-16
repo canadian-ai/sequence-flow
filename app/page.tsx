@@ -82,9 +82,14 @@ export default function Page() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-          Live playground
-        </h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            Live editor
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            Paste Mermaid, recolor it, then export the code or a PNG
+          </span>
+        </div>
         <Playground />
       </section>
 

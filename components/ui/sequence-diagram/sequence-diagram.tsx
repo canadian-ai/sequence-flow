@@ -3,14 +3,18 @@
 import "@xyflow/react/dist/base.css"
 import "./sequence-diagram.css"
 
-import { useMemo, useState } from "react"
+import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react"
 import {
   Background,
   BackgroundVariant,
   Controls,
+  getNodesBounds,
+  getViewportForBounds,
   ReactFlow,
   ReactFlowProvider,
+  useReactFlow,
 } from "@xyflow/react"
+import { toPng } from "html-to-image"
 
 import { cn } from "@/lib/utils"
 
@@ -31,6 +35,12 @@ export interface SequenceDiagramProps extends SequenceLayoutOptions {
   background?: boolean
   /** Fit the diagram to the viewport on mount. Defaults to true. */
   fitView?: boolean
+}
+
+/** Imperative handle exposed via ref for exporting the rendered diagram. */
+export interface SequenceDiagramHandle {
+  /** Renders the full diagram (not just the visible viewport) to a PNG and downloads it. */
+  exportPng: (fileName?: string) => Promise<void>
 }
 
 function MarkerDefs() {
@@ -85,16 +95,22 @@ function MarkerDefs() {
   )
 }
 
-function SequenceDiagramInner({
-  chart,
-  className,
-  controls = true,
-  background = true,
-  fitView = true,
-  columnGap,
-  messageGap,
-  showBottomActors,
-}: SequenceDiagramProps) {
+const SequenceDiagramInner = forwardRef<SequenceDiagramHandle, SequenceDiagramProps>(
+  function SequenceDiagramInner(
+    {
+      chart,
+      className,
+      controls = true,
+      background = true,
+      fitView = true,
+      columnGap,
+      messageGap,
+      showBottomActors,
+    },
+    ref,
+  ) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const { getNodes } = useReactFlow()
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null)
   const [hoveredParticipant, setHoveredParticipant] = useState<string | null>(null)
   const [activeParticipants, setActiveParticipants] = useState<Set<string>>(
@@ -105,6 +121,54 @@ function SequenceDiagramInner({
     const model = parseSequenceDiagram(chart)
     return buildSequenceGraph(model, { columnGap, messageGap, showBottomActors })
   }, [chart, columnGap, messageGap, showBottomActors])
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      exportPng: async (fileName = "sequence-diagram.png") => {
+        const container = containerRef.current
+        const currentNodes = getNodes()
+        if (!container || currentNodes.length === 0) return
+
+        const viewportEl = container.querySelector<HTMLElement>(
+          ".react-flow__viewport",
+        )
+        if (!viewportEl) return
+
+        const padding = 48
+        const bounds = getNodesBounds(currentNodes)
+        const imageWidth = Math.ceil(bounds.width + padding * 2)
+        const imageHeight = Math.ceil(bounds.height + padding * 2)
+        const viewport = getViewportForBounds(
+          bounds,
+          imageWidth,
+          imageHeight,
+          0.1,
+          2,
+          padding,
+        )
+        const backgroundColor = getComputedStyle(container).backgroundColor
+
+        const dataUrl = await toPng(viewportEl, {
+          backgroundColor,
+          width: imageWidth,
+          height: imageHeight,
+          pixelRatio: 2,
+          style: {
+            width: `${imageWidth}px`,
+            height: `${imageHeight}px`,
+            transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+          },
+        })
+
+        const link = document.createElement("a")
+        link.download = fileName
+        link.href = dataUrl
+        link.click()
+      },
+    }),
+    [getNodes],
+  )
 
   const hoverValue = useMemo(
     () => ({
@@ -122,7 +186,7 @@ function SequenceDiagramInner({
 
   return (
     <SequenceHoverContext.Provider value={hoverValue}>
-      <div className={cn("relative size-full", className)}>
+      <div ref={containerRef} className={cn("relative size-full bg-background", className)}>
         <MarkerDefs />
         <ReactFlow
           nodes={nodes}
@@ -155,16 +219,20 @@ function SequenceDiagramInner({
       </div>
     </SequenceHoverContext.Provider>
   )
-}
+  },
+)
 
 /**
  * A lightweight, read-only sequence diagram rendered with React Flow.
- * Author diagrams with Mermaid sequence-diagram syntax.
+ * Author diagrams with Mermaid sequence-diagram syntax. Pass a ref to access
+ * imperative export methods (e.g. `ref.current.exportPng()`).
  */
-export function SequenceDiagram(props: SequenceDiagramProps) {
-  return (
-    <ReactFlowProvider>
-      <SequenceDiagramInner {...props} />
-    </ReactFlowProvider>
-  )
-}
+export const SequenceDiagram = forwardRef<SequenceDiagramHandle, SequenceDiagramProps>(
+  function SequenceDiagram(props, ref) {
+    return (
+      <ReactFlowProvider>
+        <SequenceDiagramInner {...props} ref={ref} />
+      </ReactFlowProvider>
+    )
+  },
+)
