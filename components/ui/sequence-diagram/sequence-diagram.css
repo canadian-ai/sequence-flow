@@ -11,3 +11,30 @@
 .react-flow__edgelabel-renderer {
   z-index: 1000;
 }
+
+/**
+ * Journey-slide entrance: fade in with a slight rise, staggered per node via
+ * an inline `animation-delay` (see layout.ts `enterDelayOf`). Opt-in only —
+ * applied via the `seq-enter` class when `animateIn` is set.
+ */
+@keyframes seq-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.seq-enter {
+  animation: seq-enter 320ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seq-enter {
+    animation-duration: 1ms;
+    animation-delay: 0ms !important;
+  }
+}

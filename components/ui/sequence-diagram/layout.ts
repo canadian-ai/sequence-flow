@@ -34,11 +34,15 @@ export function buildSequenceGraph(
   const COL_GAP = options.columnGap ?? 220
   const MSG_GAP = options.messageGap ?? 56
   const showBottom = options.showBottomActors ?? true
+  const animateIn = options.animateIn ?? false
+  const STAGGER_MS = 70
 
   const index = new Map<string, number>()
   model.participants.forEach((p, i) => index.set(p.id, i))
   const xOf = (id: string) =>
     MARGIN_X + ACTOR_W / 2 + (index.get(id) ?? 0) * COL_GAP
+  /** Entrance delay (ms) for a node anchored to participant `id`, staggered left-to-right. */
+  const enterDelayOf = (id: string) => (index.get(id) ?? 0) * STAGGER_MS
 
   const hasBoxes = model.boxes.length > 0
   const headY = MARGIN_TOP + (hasBoxes ? BOX_LABEL_H : 0)
@@ -191,6 +195,8 @@ export function buildSequenceGraph(
         width: right - left,
         height: height - MARGIN_TOP * 1.5,
         explanation: box.explanation,
+        animateIn,
+        enterDelay: Math.min(...box.participantIds.map(enterDelayOf)),
       },
       draggable: false,
       selectable: false,
@@ -237,6 +243,8 @@ export function buildSequenceGraph(
         width: ACTOR_W,
         explanation: p.explanation,
         placement: "top",
+        animateIn,
+        enterDelay: enterDelayOf(p.id),
       },
       draggable: false,
       selectable: false,
@@ -254,6 +262,8 @@ export function buildSequenceGraph(
           width: ACTOR_W,
           explanation: p.explanation,
           placement: "bottom",
+          animateIn,
+          enterDelay: enterDelayOf(p.id),
         },
         draggable: false,
         selectable: false,
@@ -268,7 +278,13 @@ export function buildSequenceGraph(
       id: n.id,
       type: "seqNote",
       position: { x: n.x, y: n.y },
-      data: { text: n.text, width: n.width, height: NOTE_H },
+      data: {
+        text: n.text,
+        width: n.width,
+        height: NOTE_H,
+        animateIn,
+        enterDelay: model.participants.length * STAGGER_MS,
+      },
       draggable: false,
       selectable: false,
       zIndex: 6,

@@ -1,8 +1,9 @@
 import Link from "next/link"
 
-import { SequenceDiagram } from "@/components/ui/sequence-diagram"
+import { JourneyPlayer, SequenceDiagram } from "@/components/ui/sequence-diagram"
 import { Playground } from "@/components/demo/playground"
 import { girlChart } from "@/components/demo/examples"
+import { architectureJourney } from "@/components/demo/journeys"
 
 const features = [
   {
@@ -84,6 +85,18 @@ export default function Page() {
           </span>
         </div>
         <Playground />
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            Journeys
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            Chain multiple diagrams into a slideshow, with nodes animating in on each step
+          </span>
+        </div>
+        <JourneyPlayer slides={architectureJourney} />
       </section>
 
       <section className="flex flex-col gap-4">

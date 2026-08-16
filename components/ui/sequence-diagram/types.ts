@@ -67,4 +67,9 @@ export interface SequenceLayoutOptions {
   messageGap?: number
   /** Repeat the participant boxes at the bottom of the diagram. */
   showBottomActors?: boolean
+  /**
+   * Play a one-time fade+rise entrance animation on nodes, staggered
+   * left-to-right by column. Off by default; used by JourneyPlayer slides.
+   */
+  animateIn?: boolean
 }
