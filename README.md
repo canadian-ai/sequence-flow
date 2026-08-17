@@ -6,26 +6,17 @@ It is intentionally narrow: install the component into a React application, pass
 
 ## Install
 
-The canonical install path is the public GitHub source registry:
-
 ```bash
 npx shadcn@latest add canadian-ai/sequence-flow/sequence-diagram
 ```
 
-The shadcn CLI reads this repository's root `registry.json` directly, so the GitHub repository is the source of truth and no hosted registry runtime is required.
-
-For compatibility with older links and existing integrations, the hosted registry item remains available:
+This GitHub source registry is the canonical install path. The hosted endpoint remains available for backwards compatibility:
 
 ```bash
 npx shadcn@latest add https://sequence-flow.canadian-ai.app/r/sequence-diagram.json
 ```
 
-You can inspect the source-registry item before installing it:
-
-```bash
-npx shadcn@latest view canadian-ai/sequence-flow/sequence-diagram
-npx shadcn@latest add canadian-ai/sequence-flow/sequence-diagram --dry-run
-```
+`registry.json` is the source of truth for the component definition. The generated `public/r/*.json` files are a compatibility layer for existing consumers of the hosted registry URL.
 
 ## Pass a sequence flow
 
@@ -86,7 +77,7 @@ export function JourneyExample() {
 }
 ```
 
-You can also provide `messageCaptions` on each slide when you want narration to appear as individual messages reveal.
+You can also provide `messageCaptions` on each slide when you want narration to appear as individual messages reveal. Journey caption surfaces use the host's `card` / `card-foreground` tokens so narration stays readable even when the host OS color scheme differs from a locally selected journey theme.
 
 ## Write a journey in Markdown
 
@@ -167,20 +158,13 @@ The repository includes regression coverage for the public component surface:
 - journey Markdown parsing and validation
 - layout graph generation and reveal scheduling
 - shadcn registry completeness for the Journey runtime
-- browser smoke coverage for the Journey editor and theme controls
+- source-registry validation and consumer install dry-runs
+- browser smoke coverage for the Journey editor, theme controls, mobile overflow, and caption contrast across host color schemes
 
 Run the unit/integration suite with:
 
 ```bash
 pnpm test
-```
-
-Validate the GitHub source registry with:
-
-```bash
-pnpm exec shadcn registry validate canadian-ai/sequence-flow
-pnpm exec shadcn view canadian-ai/sequence-flow/sequence-diagram
-pnpm exec shadcn add canadian-ai/sequence-flow/sequence-diagram --dry-run --yes
 ```
 
 Run browser smoke tests with:
@@ -190,14 +174,7 @@ pnpm dlx playwright@1.54.2 install chromium
 pnpm test:e2e
 ```
 
-The GitHub Actions workflow validates the source registry, performs a dry-run consumer install, runs unit/integration tests, builds the production Next.js app, and runs browser smoke coverage for every pull request.
-
-## Distribution model
-
-- `registry.json` at the repository root is the canonical source registry.
-- `canadian-ai/sequence-flow/sequence-diagram` is the preferred public install address.
-- `public/r/*.json` remains published as a compatibility layer for existing hosted-registry URLs.
-- New documentation and UI should point to the GitHub source registry rather than the hosted JSON endpoint.
+The GitHub Actions workflow runs unit/integration tests, validates the exact GitHub source-registry revision, exercises a shadcn install dry-run, performs a production Next.js build, and runs browser smoke coverage for every pull request.
 
 ## What this repo is
 
@@ -205,7 +182,7 @@ The GitHub Actions workflow validates the source registry, performs a dry-run co
 - A progressive journey player for multi-step technical walkthroughs.
 - A Markdown-to-`JourneySlide[]` compiler for annotated journey documents.
 - A small Mermaid-compatible parser and layout layer for sequence diagrams.
-- A shadcn GitHub source registry developers can install directly into their applications.
+- A shadcn registry package developers can copy directly into their applications.
 - A demo playground for testing diagrams, journeys, and the component API.
 
 ## What this repo is not
