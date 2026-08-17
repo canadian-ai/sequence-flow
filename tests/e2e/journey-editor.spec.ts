@@ -9,7 +9,7 @@ test("journey editor supports markdown, json, and live themes", async ({ page })
   await expect(markdownButton).toHaveAttribute("aria-pressed", "true")
 
   const textarea = page.getByLabel("Journey markdown source")
-  await expect(textarea).toContainText("# Request lifecycle")
+  await expect(textarea).toHaveValue(/# Request lifecycle/)
 
   const forest = page.getByRole("button", { name: /Forest/ })
   await forest.click()
@@ -19,7 +19,7 @@ test("journey editor supports markdown, json, and live themes", async ({ page })
   await expect(page.getByRole("button", { name: "dark", exact: true })).toHaveAttribute("aria-pressed", "true")
 
   await jsonButton.click()
-  await expect(page.getByLabel("Journey json source")).toContainText('"id"')
+  await expect(page.getByLabel("Journey json source")).toHaveValue(/"id"/)
 })
 
 test("journey editor stays within a mobile viewport", async ({ page }) => {
