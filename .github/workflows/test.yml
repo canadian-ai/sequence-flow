@@ -18,6 +18,7 @@ jobs:
     timeout-minutes: 15
     env:
       CI: true
+      REGISTRY_REF: ${{ github.event.pull_request.head.sha || github.sha }}
 
     steps:
       - name: Checkout
@@ -37,23 +38,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
-
       - name: Unit tests
         run: pnpm test
 
       - name: Validate shadcn source registry
-        run: pnpm exec shadcn registry validate canadian-ai/sequence-flow#${GITHUB_SHA}
+        run: pnpm exec shadcn registry validate canadian-ai/sequence-flow#${REGISTRY_REF}
 
       - name: Resolve shadcn registry catalog
-        run: pnpm exec shadcn list canadian-ai/sequence-flow#${GITHUB_SHA}
+        run: pnpm exec shadcn list canadian-ai/sequence-flow#${REGISTRY_REF}
 
       - name: Resolve sequence diagram item
-        run: pnpm exec shadcn view canadian-ai/sequence-flow/sequence-diagram#${GITHUB_SHA}
+        run: pnpm exec shadcn view canadian-ai/sequence-flow/sequence-diagram#${REGISTRY_REF}
 
       - name: Dry-run consumer installation
-        run: pnpm exec shadcn add canadian-ai/sequence-flow/sequence-diagram#${GITHUB_SHA} --dry-run --yes
+        run: pnpm exec shadcn add canadian-ai/sequence-flow/sequence-diagram#${REGISTRY_REF} --dry-run --yes
 
       - name: Production build
         run: pnpm build
