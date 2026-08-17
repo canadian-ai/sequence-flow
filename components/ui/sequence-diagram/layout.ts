@@ -19,20 +19,10 @@ export interface HandleSpec {
   top: number
 }
 
-/** Base (speed = 1) entrance-animation timing constants, shared with JourneyPlayer. */
 const BASE_ACTOR_STAGGER_MS = 70
-/**
- * How long the traveling packet takes to move from source to target.
- * Deliberately slower than a micro-interaction so the eye can follow the edge.
- */
 const BASE_TRAVEL_MS = 650
-/**
- * Pace default message reveals around a conservative sixth-grade reading rate.
- * Comprehension-based silent reading research reports roughly 165 WPM for
- * sixth graders, while fluency guidance places grade-six targets around the
- * 110–160+ WPM range. We use 160 WPM and add a short orientation beat because
- * diagram labels are technical fragments rather than continuous prose.
- */
+// Conservative sixth-grade pace: ~160 WPM, plus a short orientation beat for
+// technical fragments that are scanned differently from continuous prose.
 const READING_WPM = 160
 const MS_PER_WORD = 60_000 / READING_WPM
 const READING_ORIENTATION_MS = 600
@@ -49,22 +39,14 @@ function readableHoldMs(text: string) {
 export interface StepSchedule {
   /** Delay (ms) before the actor boxes have finished settling in. */
   actorSettleDelay: number
-  /**
-   * Absolute entrance delay (ms) for each message/note step, in
-   * chronological (top-to-bottom) order. `delays[i]` is when step `i`
-   * animates in; the gap to the next step is based on a sixth-grade reading
-   * pace for that step's visible text, unless `%% duration: <ms>` overrides it.
-   */
+  /** Absolute entrance delay for each message/note in chronological order. */
   delays: number[]
 }
 
 /**
- * Compute a chart's `animateIn` schedule: actors fade in first, then
- * messages/notes reveal one at a time. Default holds scale with the amount of
- * text at a conservative sixth-grade reading pace, while explicit duration
- * annotations remain authoritative. Both `buildSequenceGraph` and
- * JourneyPlayer call this same function so edge motion and live captions stay
- * synchronized.
+ * Actors settle first, then messages/notes reveal one at a time. Default holds
+ * scale with visible text at a sixth-grade reading pace; explicit
+ * `%% duration: <ms>` annotations remain authoritative.
  */
 export function getStepSchedule(model: SeqModel, speed = 1): StepSchedule {
   const actorSettleDelay =
@@ -104,7 +86,6 @@ export function buildSequenceGraph(
   model.participants.forEach((p, i) => index.set(p.id, i))
   const xOf = (id: string) =>
     MARGIN_X + ACTOR_W / 2 + (index.get(id) ?? 0) * COL_GAP
-  /** Entrance delay (ms) for a node anchored to participant `id`, staggered left-to-right. */
   const enterDelayOf = (id: string) => (index.get(id) ?? 0) * STAGGER_MS
 
   const { delays: stepDelays } = getStepSchedule(model, speed)
@@ -238,22 +219,18 @@ export function buildSequenceGraph(
     }
   }
 
-  // Close any activations left open.
   for (const pid of Object.keys(activeStacks)) {
     while (activeStacks[pid].length) popAct(pid, y)
   }
 
   const bottomHeadY = y + BOTTOM_GAP
-  const lifelineHeight =
-    (showBottom ? bottomHeadY : y + BOTTOM_GAP) - lifelineTop
-  const height =
-    (showBottom ? bottomHeadY + ACTOR_H : y + BOTTOM_GAP) + MARGIN_TOP
+  const lifelineHeight = (showBottom ? bottomHeadY : y + BOTTOM_GAP) - lifelineTop
+  const height = (showBottom ? bottomHeadY + ACTOR_H : y + BOTTOM_GAP) + MARGIN_TOP
   const lastX = xOf(model.participants[model.participants.length - 1]?.id ?? "")
   const width = lastX + ACTOR_W / 2 + MARGIN_X
 
   const nodes: Node[] = []
 
-  // Group boxes (lowest layer).
   for (const box of model.boxes) {
     if (box.participantIds.length === 0) continue
     const xs = box.participantIds.map(xOf)
@@ -278,7 +255,6 @@ export function buildSequenceGraph(
     })
   }
 
-  // Lifelines.
   for (const p of model.participants) {
     nodes.push({
       id: `ll-${p.id}`,
@@ -291,7 +267,6 @@ export function buildSequenceGraph(
     })
   }
 
-  // Activation bars.
   activations.forEach((a, i) => {
     nodes.push({
       id: `act-${i}`,
@@ -304,7 +279,6 @@ export function buildSequenceGraph(
     })
   })
 
-  // Actor heads (top + optional bottom).
   for (const p of model.participants) {
     nodes.push({
       id: `head-${p.id}`,
@@ -346,7 +320,6 @@ export function buildSequenceGraph(
     }
   }
 
-  // Notes.
   for (const n of notes) {
     nodes.push({
       id: n.id,
@@ -366,7 +339,6 @@ export function buildSequenceGraph(
     })
   }
 
-  // Message edges.
   const edges: Edge[] = msgLayouts.map((m) => ({
     id: `e${m.index}`,
     source: `ll-${m.from}`,
