@@ -8,7 +8,7 @@ import { requestLifecycleChart } from "@/components/demo/examples"
 import { architectureJourney } from "@/components/demo/journeys"
 
 const install =
-  "npx shadcn@latest add https://sequence-flow-5302.vercel.app/r/sequence-diagram.json"
+  "npx shadcn@latest add https://sequence-flow.canadian-ai.app/r/sequence-diagram.json"
 
 const features = [
   {

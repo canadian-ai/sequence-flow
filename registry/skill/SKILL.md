@@ -21,7 +21,7 @@ or depend on Canadian AI's private runtime or internal application architecture.
 ## Installation
 
 ```bash
-npx shadcn@latest add https://sequence-flow-5302.vercel.app/r/sequence-diagram.json
+npx shadcn@latest add https://sequence-flow.canadian-ai.app/r/sequence-diagram.json
 ```
 
 This installs the component under `components/ui/sequence-diagram/`, adds the

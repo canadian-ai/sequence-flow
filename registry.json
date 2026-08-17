@@ -1,7 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
   "name": "sequence-flow",
-  "homepage": "https://sequence-flow-5302.vercel.app",
+  "homepage": "https://sequence-flow.canadian-ai.app",
   "items": [
     {
       "name": "sequence-diagram",
