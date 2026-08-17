@@ -165,7 +165,7 @@ pnpm dlx playwright@1.54.2 install chromium
 pnpm test:e2e
 ```
 
-The GitHub Actions workflow runs tests, lint, a production Next.js build, and browser smoke coverage for every pull request.
+The GitHub Actions workflow runs unit/integration tests, a production Next.js build, and browser smoke coverage for every pull request.
 
 ## What this repo is
 
