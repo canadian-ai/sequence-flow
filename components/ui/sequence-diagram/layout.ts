@@ -19,36 +19,34 @@ export interface HandleSpec {
   top: number
 }
 
-/** Base (speed = 1) entrance-animation timing constants, shared with JourneyPlayer. */
 const BASE_ACTOR_STAGGER_MS = 70
-/** How long the traveling dot takes to fly from source to target along an edge. */
-const BASE_TRAVEL_MS = 360
-// Give each message's dot time to land (BASE_TRAVEL_MS) plus a short beat
-// before the next one launches, so packets arrive one at a time instead of
-// overlapping mid-flight.
-const BASE_STEP_STAGGER_MS = BASE_TRAVEL_MS + 140
+const BASE_TRAVEL_MS = 650
+// Conservative sixth-grade pace: ~160 WPM, plus a short orientation beat for
+// technical fragments that are scanned differently from continuous prose.
+const READING_WPM = 160
+const MS_PER_WORD = 60_000 / READING_WPM
+const READING_ORIENTATION_MS = 600
+const MIN_STEP_HOLD_MS = 1600
+const MAX_STEP_HOLD_MS = 5000
 const BASE_SETTLE_PAD_MS = 150
+
+function readableHoldMs(text: string) {
+  const words = text.trim().match(/\S+/g)?.length ?? 0
+  const readingTime = words * MS_PER_WORD + READING_ORIENTATION_MS
+  return Math.min(MAX_STEP_HOLD_MS, Math.max(MIN_STEP_HOLD_MS, readingTime))
+}
 
 export interface StepSchedule {
   /** Delay (ms) before the actor boxes have finished settling in. */
   actorSettleDelay: number
-  /**
-   * Absolute entrance delay (ms) for each message/note step, in
-   * chronological (top-to-bottom) order. `delays[i]` is when step `i`
-   * animates in; the gap to the next step defaults to the base stagger but
-   * stretches to honor that step's own `%% duration: <ms>` override, if set.
-   */
+  /** Absolute entrance delay for each message/note in chronological order. */
   delays: number[]
 }
 
 /**
- * Compute a chart's `animateIn` schedule: actors fade in first
- * (`actorSettleDelay` covers all of them), then messages/notes reveal one at
- * a time, each holding for its own `durationMs` (or the default stagger)
- * before the next one appears. Both `buildSequenceGraph` and JourneyPlayer
- * call this on the same parsed model so the diagram's own entrance timing
- * and the live caption stay in lockstep, including any per-step duration
- * overrides from the chart's `%% duration:` annotations.
+ * Actors settle first, then messages/notes reveal one at a time. Default holds
+ * scale with visible text at a sixth-grade reading pace; explicit
+ * `%% duration: <ms>` annotations remain authoritative.
  */
 export function getStepSchedule(model: SeqModel, speed = 1): StepSchedule {
   const actorSettleDelay =
@@ -58,7 +56,8 @@ export function getStepSchedule(model: SeqModel, speed = 1): StepSchedule {
   for (const ev of model.events) {
     if (ev.kind !== "message" && ev.kind !== "note") continue
     delays.push(cursor)
-    const hold = ev.durationMs != null ? ev.durationMs * speed : BASE_STEP_STAGGER_MS * speed
+    const defaultHold = readableHoldMs(ev.text)
+    const hold = ev.durationMs != null ? ev.durationMs * speed : defaultHold * speed
     cursor += hold
   }
   return { actorSettleDelay, delays }
@@ -87,12 +86,8 @@ export function buildSequenceGraph(
   model.participants.forEach((p, i) => index.set(p.id, i))
   const xOf = (id: string) =>
     MARGIN_X + ACTOR_W / 2 + (index.get(id) ?? 0) * COL_GAP
-  /** Entrance delay (ms) for a node anchored to participant `id`, staggered left-to-right. */
   const enterDelayOf = (id: string) => (index.get(id) ?? 0) * STAGGER_MS
 
-  // Messages and notes animate in one at a time, in chronological (top-to-bottom)
-  // order, once the actor boxes have finished settling in — each holding for
-  // its own `%% duration:` override (if set) before the next one appears.
   const { delays: stepDelays } = getStepSchedule(model, speed)
   let stepIndex = 0
   const nextStepDelay = () => stepDelays[stepIndex++]
@@ -224,22 +219,18 @@ export function buildSequenceGraph(
     }
   }
 
-  // Close any activations left open.
   for (const pid of Object.keys(activeStacks)) {
     while (activeStacks[pid].length) popAct(pid, y)
   }
 
   const bottomHeadY = y + BOTTOM_GAP
-  const lifelineHeight =
-    (showBottom ? bottomHeadY : y + BOTTOM_GAP) - lifelineTop
-  const height =
-    (showBottom ? bottomHeadY + ACTOR_H : y + BOTTOM_GAP) + MARGIN_TOP
+  const lifelineHeight = (showBottom ? bottomHeadY : y + BOTTOM_GAP) - lifelineTop
+  const height = (showBottom ? bottomHeadY + ACTOR_H : y + BOTTOM_GAP) + MARGIN_TOP
   const lastX = xOf(model.participants[model.participants.length - 1]?.id ?? "")
   const width = lastX + ACTOR_W / 2 + MARGIN_X
 
   const nodes: Node[] = []
 
-  // Group boxes (lowest layer).
   for (const box of model.boxes) {
     if (box.participantIds.length === 0) continue
     const xs = box.participantIds.map(xOf)
@@ -264,7 +255,6 @@ export function buildSequenceGraph(
     })
   }
 
-  // Lifelines.
   for (const p of model.participants) {
     nodes.push({
       id: `ll-${p.id}`,
@@ -277,7 +267,6 @@ export function buildSequenceGraph(
     })
   }
 
-  // Activation bars.
   activations.forEach((a, i) => {
     nodes.push({
       id: `act-${i}`,
@@ -290,7 +279,6 @@ export function buildSequenceGraph(
     })
   })
 
-  // Actor heads (top + optional bottom).
   for (const p of model.participants) {
     nodes.push({
       id: `head-${p.id}`,
@@ -332,7 +320,6 @@ export function buildSequenceGraph(
     }
   }
 
-  // Notes.
   for (const n of notes) {
     nodes.push({
       id: n.id,
@@ -352,7 +339,6 @@ export function buildSequenceGraph(
     })
   }
 
-  // Message edges.
   const edges: Edge[] = msgLayouts.map((m) => ({
     id: `e${m.index}`,
     source: `ll-${m.from}`,

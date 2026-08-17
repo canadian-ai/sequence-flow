@@ -5,20 +5,59 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: true
+      REGISTRY_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 10
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm test
-      - run: pnpm build
-      - run: pnpm dlx playwright@1.54.2 install --with-deps chromium
-      - run: pnpm test:e2e
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Validate shadcn source registry
+        run: pnpm exec shadcn registry validate canadian-ai/sequence-flow#${REGISTRY_REF}
+
+      - name: Resolve shadcn registry catalog
+        run: pnpm exec shadcn list canadian-ai/sequence-flow#${REGISTRY_REF}
+
+      - name: Resolve sequence diagram item
+        run: pnpm exec shadcn view canadian-ai/sequence-flow/sequence-diagram#${REGISTRY_REF}
+
+      - name: Dry-run consumer installation
+        run: pnpm exec shadcn add canadian-ai/sequence-flow/sequence-diagram#${REGISTRY_REF} --dry-run --yes
+
+      - name: Production build
+        run: pnpm build
+
+      - name: Install Playwright Chromium
+        run: pnpm dlx playwright@1.54.2 install --with-deps chromium
+
+      - name: End-to-end tests
+        run: pnpm test:e2e

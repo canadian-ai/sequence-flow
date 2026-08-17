@@ -123,7 +123,8 @@ export function SequenceExample() {
 function buildJourneyCode(slides: JourneySlide[], themeId: string, mode: ColorMode) {
   const theme = THEMES.find((item) => item.id === themeId) ?? DEFAULT_THEME
   const colors = theme[mode]
-  return `import { JourneyPlayer, type JourneySlide } from "@/components/ui/sequence-diagram"\n\nconst journey: JourneySlide[] = ${JSON.stringify(slides, null, 2)}\n\nexport function JourneyExample() {\n  return (\n    <div style={{\n      "--seq-accent": "${colors.accent}",\n      "--seq-accent-foreground": "${getContrastColor(colors.accent)}",\n      "--seq-activation": "${colors.activation}",\n      "--seq-lifeline": "${colors.lifeline}",\n      "--background": "${colors.background}",\n      "--card": "${colors.background}",\n    } as React.CSSProperties}>\n      <JourneyPlayer slides={journey} />\n    </div>\n  )\n}`
+  const foreground = getContrastColor(colors.background)
+  return `import { JourneyPlayer, type JourneySlide } from "@/components/ui/sequence-diagram"\n\nconst journey: JourneySlide[] = ${JSON.stringify(slides, null, 2)}\n\nexport function JourneyExample() {\n  return (\n    <div style={{\n      "--seq-accent": "${colors.accent}",\n      "--seq-accent-foreground": "${getContrastColor(colors.accent)}",\n      "--seq-activation": "${colors.activation}",\n      "--seq-lifeline": "${colors.lifeline}",\n      "--background": "${colors.background}",\n      "--card": "${colors.background}",\n      "--foreground": "${foreground}",\n      "--card-foreground": "${foreground}",\n    } as React.CSSProperties}>\n      <JourneyPlayer slides={journey} />\n    </div>\n  )\n}`
 }
 
 function CodeBlock({ code }: { code: string }) {
@@ -180,6 +181,7 @@ function JourneyEditor() {
 
   const activeTheme = THEMES.find((theme) => theme.id === themeId) ?? DEFAULT_THEME
   const colors = activeTheme[mode]
+  const foreground = getContrastColor(colors.background)
   const journeyStyle: CSSProperties = {
     ["--seq-accent" as string]: colors.accent,
     ["--seq-accent-foreground" as string]: getContrastColor(colors.accent),
@@ -187,8 +189,8 @@ function JourneyEditor() {
     ["--seq-lifeline" as string]: colors.lifeline,
     ["--background" as string]: colors.background,
     ["--card" as string]: colors.background,
-    ["--foreground" as string]: getContrastColor(colors.background),
-    ["--card-foreground" as string]: getContrastColor(colors.background),
+    ["--foreground" as string]: foreground,
+    ["--card-foreground" as string]: foreground,
   }
 
   return <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,400px)_1fr]">

@@ -6,8 +6,7 @@ import { Check, Copy, Download, FileCode2, Terminal } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const RESET_DELAY_MS = 1800
-const COMPONENT_COMMAND =
-  "npx shadcn@latest add https://sequence-flow.canadian-ai.app/r/sequence-diagram.json"
+const COMPONENT_COMMAND = "npx shadcn@latest add canadian-ai/sequence-flow/sequence-diagram"
 const SKILL_URL =
   "https://raw.githubusercontent.com/canadian-ai/sequence-flow/main/registry/skill/SKILL.md"
 
@@ -143,6 +142,15 @@ export function HeroInstall() {
           </button>
         </div>
 
+        {mode === "component" ? (
+          <div className="flex items-center gap-2 border-t border-border bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground sm:px-4">
+            <FileCode2 className="size-3.5 shrink-0" aria-hidden />
+            <span>
+              Installs directly from the public GitHub source registry. The hosted <code>/r/*.json</code> endpoint remains available for compatibility.
+            </span>
+          </div>
+        ) : null}
+
         {mode === "skill" ? (
           <div className="flex flex-col gap-2 border-t border-border bg-muted/20 p-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
@@ -178,7 +186,7 @@ export function HeroInstall() {
 
       <p className="text-xs leading-relaxed text-muted-foreground">
         {mode === "component"
-          ? "Install the React component through the shadcn registry. MIT licensed; no hosted runtime required."
+          ? "Install the React component straight from the Canadian AI GitHub registry. MIT licensed; no hosted runtime required."
           : `Install the portable Agent Skills file into ${selectedAgent.label}'s project-local skill directory, or copy SKILL.md directly.`}
       </p>
     </div>

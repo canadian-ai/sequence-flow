@@ -7,8 +7,16 @@ It is intentionally narrow: install the component into a React application, pass
 ## Install
 
 ```bash
+npx shadcn@latest add canadian-ai/sequence-flow/sequence-diagram
+```
+
+This GitHub source registry is the canonical install path. The hosted endpoint remains available for backwards compatibility:
+
+```bash
 npx shadcn@latest add https://sequence-flow.canadian-ai.app/r/sequence-diagram.json
 ```
+
+`registry.json` is the source of truth for the component definition. The generated `public/r/*.json` files are a compatibility layer for existing consumers of the hosted registry URL.
 
 ## Pass a sequence flow
 
@@ -69,7 +77,13 @@ export function JourneyExample() {
 }
 ```
 
-You can also provide `messageCaptions` on each slide when you want narration to appear as individual messages reveal.
+You can also provide `messageCaptions` on each slide when you want narration to appear as individual messages reveal. Journey caption surfaces use the host's `card` / `card-foreground` tokens so narration stays readable even when the host OS color scheme differs from a locally selected journey theme.
+
+### Journey pacing
+
+Journey reveals are paced for reading rather than micro-interaction speed. Sequence Flow uses a conservative **160 WPM** default based on sixth-grade reading/fluency research, adds a short orientation beat for technical labels, and uses a **650 ms** traveling packet so the eye can follow each edge. Even a one-word label gets at least **1.6 seconds** before the next message starts, while longer labels receive proportionally more time up to a bounded maximum.
+
+Use a Mermaid `%% duration: <ms>` annotation when a specific message needs a deliberate custom hold. The `speed` prop still scales the full animation schedule.
 
 ## Write a journey in Markdown
 
