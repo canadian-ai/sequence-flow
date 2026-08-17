@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useEffect, useState } from "react"
+import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -23,6 +23,24 @@ export interface JourneyPlayerProps extends Omit<SequenceLayoutOptions, "animate
   className?: string
   /** Height of the diagram viewport. Defaults to 420px. */
   height?: number
+  /**
+   * Fixed dwell time (ms) per slide during autoplay. When omitted, dwell
+   * time is estimated from the slide's caption length so slides with more
+   * commentary to read stay on screen longer.
+   */
+  autoPlayIntervalMs?: number
+}
+
+const MIN_DWELL_MS = 2600
+const MAX_DWELL_MS = 7000
+const MS_PER_CAPTION_CHAR = 30
+
+/** Estimate how long a slide should stay on screen during autoplay, based on caption length. */
+function dwellTimeFor(slide: JourneySlide, override?: number) {
+  if (override) return override
+  if (!slide.caption) return MIN_DWELL_MS
+  const estimate = MIN_DWELL_MS + slide.caption.length * MS_PER_CAPTION_CHAR
+  return Math.min(MAX_DWELL_MS, Math.max(MIN_DWELL_MS, estimate))
 }
 
 /**
@@ -38,15 +56,47 @@ export function JourneyPlayer({
   columnGap,
   messageGap,
   showBottomActors,
+  autoPlayIntervalMs,
 }: JourneyPlayerProps) {
   const [index, setIndex] = useState(0)
+  const [playing, setPlaying] = useState(false)
   const slide = slides[index]
   const atStart = index === 0
   const atEnd = index === slides.length - 1
+  const canPlay = slides.length > 1
 
+  /** Manual navigation (arrows, dots, keyboard) always stops autoplay. */
   function goTo(next: number) {
+    setPlaying(false)
     setIndex(Math.max(0, Math.min(slides.length - 1, next)))
   }
+
+  function togglePlay() {
+    if (!canPlay) return
+    if (playing) {
+      setPlaying(false)
+      return
+    }
+    // Replaying from a finished journey starts over from the top.
+    if (atEnd) setIndex(0)
+    setPlaying(true)
+  }
+
+  // Advance one slide per dwell period while playing; each advance remounts
+  // the diagram (via `key={slide.id}` below) so the node entrance animation
+  // replays for every step, exactly like clicking "next" manually.
+  useEffect(() => {
+    if (!playing) return
+    if (index === slides.length - 1) {
+      setPlaying(false)
+      return
+    }
+    const dwell = dwellTimeFor(slides[index], autoPlayIntervalMs)
+    const id = setTimeout(() => {
+      setIndex((i) => Math.min(slides.length - 1, i + 1))
+    }, dwell)
+    return () => clearTimeout(id)
+  }, [playing, index, slides, autoPlayIntervalMs])
 
   function handleKeyDown(event: React.KeyboardEvent) {
     if (event.key === "ArrowRight") {
@@ -55,6 +105,9 @@ export function JourneyPlayer({
     } else if (event.key === "ArrowLeft") {
       event.preventDefault()
       goTo(index - 1)
+    } else if (event.key === " " || event.key === "Spacebar") {
+      event.preventDefault()
+      togglePlay()
     }
   }
 
@@ -97,6 +150,20 @@ export function JourneyPlayer({
             ))}
           </div>
           <div className="flex border border-border">
+            {canPlay ? (
+              <button
+                type="button"
+                aria-label={playing ? "Pause" : atEnd ? "Replay journey" : "Play journey"}
+                onClick={togglePlay}
+                className="flex items-center justify-center border-r border-border p-1.5 text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {playing ? (
+                  <Pause className="size-4" aria-hidden />
+                ) : (
+                  <Play className="size-4" aria-hidden />
+                )}
+              </button>
+            ) : null}
             <button
               type="button"
               aria-label="Previous step"
@@ -135,7 +202,10 @@ export function JourneyPlayer({
       </div>
 
       {slide.caption ? (
-        <p className="border-t border-border pt-3 text-sm leading-relaxed text-muted-foreground">
+        <p
+          key={slide.id}
+          className="seq-enter border-t border-border pt-3 text-sm leading-relaxed text-muted-foreground"
+        >
           {slide.caption}
         </p>
       ) : null}
