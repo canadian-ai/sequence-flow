@@ -1,5 +1,27 @@
 import { expect, test } from "@playwright/test"
 
+function parseRgb(value: string) {
+  const match = value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/)
+  if (!match) throw new Error(`Unsupported color: ${value}`)
+  return [Number(match[1]), Number(match[2]), Number(match[3])] as const
+}
+
+function relativeLuminance([r, g, b]: readonly number[]) {
+  const channel = (value: number) => {
+    const normalized = value / 255
+    return normalized <= 0.04045
+      ? normalized / 12.92
+      : ((normalized + 0.055) / 1.055) ** 2.4
+  }
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+}
+
+function contrastRatio(foreground: string, background: string) {
+  const lighter = Math.max(relativeLuminance(parseRgb(foreground)), relativeLuminance(parseRgb(background)))
+  const darker = Math.min(relativeLuminance(parseRgb(foreground)), relativeLuminance(parseRgb(background)))
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
 test("journey editor supports markdown, json, and live themes", async ({ page }) => {
   await page.goto("/")
   await page.getByRole("tab", { name: "Journey" }).click()
@@ -36,4 +58,24 @@ test("journey editor stays within a mobile viewport", async ({ page }) => {
     clientWidth: document.documentElement.clientWidth,
   }))
   expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1)
+})
+
+test("journey captions remain readable when the host prefers dark mode", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto("/")
+  await page.getByRole("tab", { name: "Journey" }).click()
+
+  const caption = page.locator("[data-journey-live-caption]")
+  await expect(caption).toBeVisible()
+
+  const colors = await caption.evaluate((element) => {
+    const style = getComputedStyle(element)
+    return {
+      foreground: style.color,
+      background: style.backgroundColor,
+    }
+  })
+
+  expect(contrastRatio(colors.foreground, colors.background)).toBeGreaterThanOrEqual(4.5)
 })
