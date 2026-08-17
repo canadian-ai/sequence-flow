@@ -21,13 +21,29 @@ export interface HandleSpec {
 
 /** Base (speed = 1) entrance-animation timing constants, shared with JourneyPlayer. */
 const BASE_ACTOR_STAGGER_MS = 70
-/** How long the traveling dot takes to fly from source to target along an edge. */
-const BASE_TRAVEL_MS = 360
-// Give each message's dot time to land (BASE_TRAVEL_MS) plus a short beat
-// before the next one launches, so packets arrive one at a time instead of
-// overlapping mid-flight.
-const BASE_STEP_STAGGER_MS = BASE_TRAVEL_MS + 140
+/**
+ * How long the traveling packet takes to move from source to target.
+ * Deliberately slower than a micro-interaction so the eye can follow the edge.
+ */
+const BASE_TRAVEL_MS = 650
+/**
+ * Pace default message reveals around a conservative sixth-grade reading rate.
+ * Research puts sixth-grade comprehension-based silent reading near 165 WPM;
+ * we use 160 WPM and add a short orientation beat because diagram labels are
+ * technical fragments rather than continuous prose.
+ */
+const READING_WPM = 160
+const MS_PER_WORD = 60_000 / READING_WPM
+const READING_ORIENTATION_MS = 600
+const MIN_STEP_HOLD_MS = 1600
+const MAX_STEP_HOLD_MS = 5000
 const BASE_SETTLE_PAD_MS = 150
+
+function readableHoldMs(text: string) {
+  const words = text.trim().match(/\S+/g)?.length ?? 0
+  const readingTime = words * MS_PER_WORD + READING_ORIENTATION_MS
+  return Math.min(MAX_STEP_HOLD_MS, Math.max(MIN_STEP_HOLD_MS, readingTime))
+}
 
 export interface StepSchedule {
   /** Delay (ms) before the actor boxes have finished settling in. */
@@ -35,20 +51,19 @@ export interface StepSchedule {
   /**
    * Absolute entrance delay (ms) for each message/note step, in
    * chronological (top-to-bottom) order. `delays[i]` is when step `i`
-   * animates in; the gap to the next step defaults to the base stagger but
-   * stretches to honor that step's own `%% duration: <ms>` override, if set.
+   * animates in; the gap to the next step is based on a sixth-grade reading
+   * pace for that step's visible text, unless `%% duration: <ms>` overrides it.
    */
   delays: number[]
 }
 
 /**
- * Compute a chart's `animateIn` schedule: actors fade in first
- * (`actorSettleDelay` covers all of them), then messages/notes reveal one at
- * a time, each holding for its own `durationMs` (or the default stagger)
- * before the next one appears. Both `buildSequenceGraph` and JourneyPlayer
- * call this on the same parsed model so the diagram's own entrance timing
- * and the live caption stay in lockstep, including any per-step duration
- * overrides from the chart's `%% duration:` annotations.
+ * Compute a chart's `animateIn` schedule: actors fade in first, then
+ * messages/notes reveal one at a time. Default holds scale with the amount of
+ * text at a conservative sixth-grade reading pace, while explicit duration
+ * annotations remain authoritative. Both `buildSequenceGraph` and
+ * JourneyPlayer call this same function so edge motion and live captions stay
+ * synchronized.
  */
 export function getStepSchedule(model: SeqModel, speed = 1): StepSchedule {
   const actorSettleDelay =
@@ -58,7 +73,8 @@ export function getStepSchedule(model: SeqModel, speed = 1): StepSchedule {
   for (const ev of model.events) {
     if (ev.kind !== "message" && ev.kind !== "note") continue
     delays.push(cursor)
-    const hold = ev.durationMs != null ? ev.durationMs * speed : BASE_STEP_STAGGER_MS * speed
+    const defaultHold = readableHoldMs(ev.text)
+    const hold = ev.durationMs != null ? ev.durationMs * speed : defaultHold * speed
     cursor += hold
   }
   return { actorSettleDelay, delays }
@@ -90,9 +106,6 @@ export function buildSequenceGraph(
   /** Entrance delay (ms) for a node anchored to participant `id`, staggered left-to-right. */
   const enterDelayOf = (id: string) => (index.get(id) ?? 0) * STAGGER_MS
 
-  // Messages and notes animate in one at a time, in chronological (top-to-bottom)
-  // order, once the actor boxes have finished settling in — each holding for
-  // its own `%% duration:` override (if set) before the next one appears.
   const { delays: stepDelays } = getStepSchedule(model, speed)
   let stepIndex = 0
   const nextStepDelay = () => stepDelays[stepIndex++]
