@@ -3,11 +3,8 @@ import Link from "next/link"
 
 import { EditorWorkbench } from "@/components/demo/editor-workbench"
 import { requestLifecycleChart } from "@/components/demo/examples"
-import { InstallCommand } from "@/components/install-command"
+import { HeroInstall } from "@/components/hero-install"
 import { SequenceDiagram } from "@/components/ui/sequence-diagram"
-
-const install =
-  "npx shadcn@latest add https://sequence-flow.canadian-ai.app/r/sequence-diagram.json"
 
 const features = [
   {
@@ -28,7 +25,7 @@ const features = [
   },
   {
     title: "Agent-friendly",
-    body: "Keep diagrams and journeys as portable text and data so developers and coding agents can generate and revise them easily.",
+    body: "Install the included Agent Skill for Claude Code, Codex, or OpenCode so coding agents can author and revise diagrams consistently.",
   },
   {
     title: "Copy and paste",
@@ -64,6 +61,9 @@ export default function Page() {
               shadcn registry
             </span>
             <span className="border border-border px-2.5 py-0.5 font-mono text-xs text-muted-foreground">
+              agent skill
+            </span>
+            <span className="border border-border px-2.5 py-0.5 font-mono text-xs text-muted-foreground">
               MIT
             </span>
           </div>
@@ -73,19 +73,11 @@ export default function Page() {
           <p className="max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
             Turn Mermaid
             <code className="mx-1 font-mono text-sm text-foreground">sequenceDiagram</code>
-            syntax into an interactive canvas, or chain multiple diagrams into a guided journey. Install the component, keep the source portable, and copy complete React examples directly from the editor.
+            syntax into an interactive canvas, chain multiple diagrams into a guided journey, or give your coding agent the Sequence Flow skill so it can author them with you.
           </p>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-3">
-          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Install with shadcn
-          </span>
-          <InstallCommand command={install} />
-          <p className="text-xs text-muted-foreground">
-            MIT licensed. No account, hosted backend, or Canadian AI platform dependency required.
-          </p>
-        </div>
+        <HeroInstall />
       </header>
 
       <section className="min-w-0 flex flex-col gap-4">
@@ -120,7 +112,7 @@ export default function Page() {
             Built for developers
           </h2>
           <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Sequence Flow intentionally stays narrow: installable visualization primitives, with no product workspace or proprietary runtime attached.
+            Sequence Flow intentionally stays narrow: installable visualization primitives and portable agent instructions, with no product workspace or proprietary runtime attached.
           </p>
         </div>
         <div className="grid gap-px overflow-hidden border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
