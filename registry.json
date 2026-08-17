@@ -1,7 +1,7 @@
 {
   "$schema": "https://ui.shadcn.com/schema/registry.json",
-  "name": "sequence-diagram",
-  "homepage": "https://girl.canadian-ai.ca",
+  "name": "sequence-flow",
+  "homepage": "https://sequence-flow-5302.vercel.app",
   "items": [
     {
       "name": "sequence-diagram",
@@ -77,7 +77,7 @@
       "name": "sequence-diagram-demo",
       "type": "registry:block",
       "title": "Sequence Diagram Demo",
-      "description": "Example page showing the sequence diagram with a live Mermaid editor and multiple sample diagrams.",
+      "description": "Example page showing the sequence diagram with a live Mermaid editor and multiple generic developer examples.",
       "registryDependencies": ["./sequence-diagram.json"],
       "files": [
         {
