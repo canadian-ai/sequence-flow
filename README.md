@@ -79,6 +79,12 @@ export function JourneyExample() {
 
 You can also provide `messageCaptions` on each slide when you want narration to appear as individual messages reveal. Journey caption surfaces use the host's `card` / `card-foreground` tokens so narration stays readable even when the host OS color scheme differs from a locally selected journey theme.
 
+### Journey pacing
+
+Journey reveals are paced for reading rather than micro-interaction speed. The default schedule targets **160 words per minute**, a conservative sixth-grade reading pace, adds a short orientation beat for technical labels, and uses a **650 ms** traveling packet so the eye can follow each edge. Even a one-word label gets at least **1.6 seconds** before the next message starts, while longer labels receive proportionally more time up to a bounded maximum.
+
+Use a Mermaid `%% duration: <ms>` annotation when a specific message needs a deliberate custom hold. The `speed` prop still scales the full animation schedule.
+
 ## Write a journey in Markdown
 
 `parseJourneyMarkdown` lets you author the same `JourneySlide[]` model in a readable Markdown document. Each `##` heading becomes a slide, ordinary Markdown becomes the slide caption, and a fenced `mermaid` block contains the diagram.
@@ -158,8 +164,7 @@ The repository includes regression coverage for the public component surface:
 - journey Markdown parsing and validation
 - layout graph generation and reveal scheduling
 - shadcn registry completeness for the Journey runtime
-- source-registry validation and consumer install dry-runs
-- browser smoke coverage for the Journey editor, theme controls, mobile overflow, and caption contrast across host color schemes
+- browser smoke coverage for the Journey editor and theme controls
 
 Run the unit/integration suite with:
 
@@ -174,7 +179,7 @@ pnpm dlx playwright@1.54.2 install chromium
 pnpm test:e2e
 ```
 
-The GitHub Actions workflow runs unit/integration tests, validates the exact GitHub source-registry revision, exercises a shadcn install dry-run, performs a production Next.js build, and runs browser smoke coverage for every pull request.
+The GitHub Actions workflow runs unit/integration tests, a production Next.js build, and browser smoke coverage for every pull request.
 
 ## What this repo is
 
