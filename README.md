@@ -6,8 +6,25 @@ It is intentionally narrow: install the component into a React application, pass
 
 ## Install
 
+The canonical install path is the public GitHub source registry:
+
+```bash
+npx shadcn@latest add canadian-ai/sequence-flow/sequence-diagram
+```
+
+The shadcn CLI reads this repository's root `registry.json` directly, so the GitHub repository is the source of truth and no hosted registry runtime is required.
+
+For compatibility with older links and existing integrations, the hosted registry item remains available:
+
 ```bash
 npx shadcn@latest add https://sequence-flow.canadian-ai.app/r/sequence-diagram.json
+```
+
+You can inspect the source-registry item before installing it:
+
+```bash
+npx shadcn@latest view canadian-ai/sequence-flow/sequence-diagram
+npx shadcn@latest add canadian-ai/sequence-flow/sequence-diagram --dry-run
 ```
 
 ## Pass a sequence flow
@@ -158,6 +175,14 @@ Run the unit/integration suite with:
 pnpm test
 ```
 
+Validate the GitHub source registry with:
+
+```bash
+pnpm exec shadcn registry validate canadian-ai/sequence-flow
+pnpm exec shadcn view canadian-ai/sequence-flow/sequence-diagram
+pnpm exec shadcn add canadian-ai/sequence-flow/sequence-diagram --dry-run --yes
+```
+
 Run browser smoke tests with:
 
 ```bash
@@ -165,7 +190,14 @@ pnpm dlx playwright@1.54.2 install chromium
 pnpm test:e2e
 ```
 
-The GitHub Actions workflow runs unit/integration tests, a production Next.js build, and browser smoke coverage for every pull request.
+The GitHub Actions workflow validates the source registry, performs a dry-run consumer install, runs unit/integration tests, builds the production Next.js app, and runs browser smoke coverage for every pull request.
+
+## Distribution model
+
+- `registry.json` at the repository root is the canonical source registry.
+- `canadian-ai/sequence-flow/sequence-diagram` is the preferred public install address.
+- `public/r/*.json` remains published as a compatibility layer for existing hosted-registry URLs.
+- New documentation and UI should point to the GitHub source registry rather than the hosted JSON endpoint.
 
 ## What this repo is
 
@@ -173,7 +205,7 @@ The GitHub Actions workflow runs unit/integration tests, a production Next.js bu
 - A progressive journey player for multi-step technical walkthroughs.
 - A Markdown-to-`JourneySlide[]` compiler for annotated journey documents.
 - A small Mermaid-compatible parser and layout layer for sequence diagrams.
-- A shadcn registry package developers can copy directly into their applications.
+- A shadcn GitHub source registry developers can install directly into their applications.
 - A demo playground for testing diagrams, journeys, and the component API.
 
 ## What this repo is not
