@@ -75,7 +75,7 @@ You can also provide `messageCaptions` on each slide when you want narration to 
 
 `parseJourneyMarkdown` lets you author the same `JourneySlide[]` model in a readable Markdown document. Each `##` heading becomes a slide, ordinary Markdown becomes the slide caption, and a fenced `mermaid` block contains the diagram.
 
-```md
+````md
 # Request lifecycle
 
 A progressive walkthrough for the request path.
@@ -105,7 +105,7 @@ sequenceDiagram
   B->>A: GET /products
   A-->>B: 200 OK
 ```
-```
+````
 
 Then compile and render it:
 
@@ -158,7 +158,14 @@ Run the unit/integration suite with:
 pnpm test
 ```
 
-The GitHub Actions workflow also runs tests, lint, and a production Next.js build for every pull request.
+Run browser smoke tests with:
+
+```bash
+pnpm dlx playwright@1.54.2 install chromium
+pnpm test:e2e
+```
+
+The GitHub Actions workflow runs tests, lint, a production Next.js build, and browser smoke coverage for every pull request.
 
 ## What this repo is
 
