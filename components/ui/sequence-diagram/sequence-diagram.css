@@ -32,8 +32,30 @@
   animation: seq-enter 320ms ease-out both;
 }
 
+/**
+ * Message edge entrance: the line fades in, timed to each message's
+ * chronological `enterDelay` (see layout.ts `nextStepDelay`) so messages
+ * appear one at a time like a step-through playback rather than all at once.
+ * A plain fade (rather than a dash-offset "draw" wipe) keeps this compatible
+ * with dashed return-message strokes, which already set their own
+ * `stroke-dasharray`.
+ */
+@keyframes seq-edge-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.seq-edge-enter {
+  animation: seq-edge-enter 220ms ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .seq-enter {
+  .seq-enter,
+  .seq-edge-enter {
     animation-duration: 1ms;
     animation-delay: 0ms !important;
   }

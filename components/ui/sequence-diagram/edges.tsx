@@ -23,6 +23,8 @@ interface MessageData {
   from: string
   to: string
   explanation?: string
+  animateIn?: boolean
+  enterDelay?: number
 }
 
 export function SeqMessageEdge({
@@ -56,6 +58,7 @@ export function SeqMessageEdge({
 
   const onEnter = () => setHover(id, [d.from, d.to])
   const onLeave = () => setHover(null, [])
+  const enterDelay = d.animateIn ? `${d.enterDelay ?? 0}ms` : undefined
 
   return (
     <>
@@ -64,19 +67,29 @@ export function SeqMessageEdge({
         path={path}
         markerEnd={MARKER[d.head]}
         interactionWidth={22}
+        className={d.animateIn ? "seq-edge-enter" : undefined}
         style={{
           stroke: "var(--seq-accent)",
           strokeWidth: hovered ? 2.5 : 1.5,
           strokeDasharray: d.line === "dashed" ? "6 4" : undefined,
           opacity: dimmed ? 0.35 : 1,
           transition: "opacity 120ms, stroke-width 120ms",
+          animationDelay: enterDelay,
         }}
       />
       <EdgeLabelRenderer>
         {d.text ? (
           <div
-            className="nodrag nopan pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2"
-            style={{ left: labelX, top: labelY, opacity: dimmed ? 0.4 : 1 }}
+            className={cn(
+              "nodrag nopan pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2",
+              d.animateIn ? "seq-enter" : undefined,
+            )}
+            style={{
+              left: labelX,
+              top: labelY,
+              opacity: dimmed ? 0.4 : 1,
+              animationDelay: enterDelay,
+            }}
             onMouseEnter={onEnter}
             onMouseLeave={onLeave}
           >

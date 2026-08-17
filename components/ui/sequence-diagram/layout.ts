@@ -44,6 +44,13 @@ export function buildSequenceGraph(
   /** Entrance delay (ms) for a node anchored to participant `id`, staggered left-to-right. */
   const enterDelayOf = (id: string) => (index.get(id) ?? 0) * STAGGER_MS
 
+  // Messages and notes animate in one at a time, in chronological (top-to-bottom)
+  // order, once the actor boxes have finished settling in.
+  const STEP_STAGGER_MS = 180
+  const actorSettleDelay = model.participants.length * STAGGER_MS + 150
+  let stepIndex = 0
+  const nextStepDelay = () => actorSettleDelay + stepIndex++ * STEP_STAGGER_MS
+
   const hasBoxes = model.boxes.length > 0
   const headY = MARGIN_TOP + (hasBoxes ? BOX_LABEL_H : 0)
   const lifelineTop = headY + ACTOR_H
@@ -97,6 +104,7 @@ export function buildSequenceGraph(
     y: number
     width: number
     text: string
+    enterDelay: number
   }
   const notes: NoteLayout[] = []
 
@@ -130,6 +138,8 @@ export function buildSequenceGraph(
           from: ev.from,
           to: ev.to,
           explanation: ev.explanation,
+          animateIn,
+          enterDelay: nextStepDelay(),
         },
       })
     } else if (ev.kind === "note") {
@@ -155,6 +165,7 @@ export function buildSequenceGraph(
         y,
         width: nw,
         text: ev.text,
+        enterDelay: nextStepDelay(),
       })
       y += NOTE_H + 20
     } else if (ev.kind === "activate") {
@@ -283,7 +294,7 @@ export function buildSequenceGraph(
         width: n.width,
         height: NOTE_H,
         animateIn,
-        enterDelay: model.participants.length * STAGGER_MS,
+        enterDelay: n.enterDelay,
       },
       draggable: false,
       selectable: false,
