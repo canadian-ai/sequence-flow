@@ -33,7 +33,7 @@ export interface SeqMessage {
   activateTarget: boolean
   /** `-` suffix: deactivate the source after this message. */
   deactivateSource: boolean
-  /** Shown in a hover tooltip on the message label. Set via trailing `%% tooltip: text`. */
+  /** Shown in a hover tooltip on the message label, and used as a JourneyPlayer step caption. Set via trailing `%% tooltip: text`. */
   explanation?: string
 }
 
@@ -43,6 +43,8 @@ export interface SeqNote {
   placement: NotePlacement
   participantIds: string[]
   text: string
+  /** Shown in a hover tooltip on the note, and used as a JourneyPlayer step caption. Set via trailing `%% tooltip: text`. */
+  explanation?: string
 }
 
 export interface SeqActivation {

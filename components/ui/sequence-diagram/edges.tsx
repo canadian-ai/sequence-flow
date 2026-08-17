@@ -90,7 +90,7 @@ export function SeqMessageEdge({
         // fade. Its arrival is what visually completes the edge.
         <path
           className="seq-edge-dot"
-          d="M -5 0 A 5 5 0 0 1 5 0 Z"
+          d="M -4 0 A 4 4 0 1 0 4 0 A 4 4 0 1 0 -4 0 Z"
           fill="var(--seq-accent)"
           style={{
             offsetPath: `path("${path}")`,

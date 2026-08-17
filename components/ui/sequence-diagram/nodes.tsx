@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+
 import { Handle, type NodeProps, Position } from "@xyflow/react"
 import { User } from "lucide-react"
 
@@ -170,29 +172,41 @@ export function SeqActorNode({ data }: NodeProps) {
   )
 }
 
-/** Note / badge callout. */
+/** Note / badge callout. Hover reveals its explanation, if any. */
 export function SeqNoteNode({ data }: NodeProps) {
   const d = data as {
     text: string
     width: number
     height: number
+    explanation?: string
     animateIn?: boolean
     enterDelay?: number
   }
+  const [hovered, setHovered] = useState(false)
+
   return (
-    <div
-      className={cn(
-        "flex items-center justify-center border border-border bg-muted px-3 py-2 text-center text-xs leading-snug text-muted-foreground",
-        d.animateIn ? "seq-enter" : undefined,
-      )}
-      style={{
-        width: d.width,
-        minHeight: d.height,
-        animationDelay: d.animateIn ? `${d.enterDelay ?? 0}ms` : undefined,
-      }}
-    >
-      {d.text}
-    </div>
+    <SeqTooltip text={d.explanation} visible={hovered}>
+      <div
+        role={d.explanation ? "button" : undefined}
+        tabIndex={d.explanation ? 0 : undefined}
+        className={cn(
+          "flex cursor-default items-center justify-center border border-border bg-muted px-3 py-2 text-center text-xs leading-snug text-muted-foreground transition-colors",
+          d.explanation && hovered ? "border-seq-accent text-foreground" : undefined,
+          d.animateIn ? "seq-enter" : undefined,
+        )}
+        style={{
+          width: d.width,
+          minHeight: d.height,
+          animationDelay: d.animateIn ? `${d.enterDelay ?? 0}ms` : undefined,
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onFocus={() => setHovered(true)}
+        onBlur={() => setHovered(false)}
+      >
+        {d.text}
+      </div>
+    </SeqTooltip>
   )
 }
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react"
+import { Check, ChevronLeft, ChevronRight, Code2, Copy, Pause, Play } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -24,8 +24,26 @@ export interface JourneySlide {
    * position to this chart's messages and notes in the order they appear
    * top-to-bottom — the same order they animate in. As each one reveals
    * during playback, its caption fades in below the diagram.
+   *
+   * Optional — when omitted, captions are read straight from the chart's own
+   * `%% tooltip: text` annotations (see the sequence-diagram parser), so the
+   * Mermaid source stays the single source of truth for both the hover
+   * tooltip and the step-through caption. Only pass this to override that.
    */
   messageCaptions?: string[]
+}
+
+/**
+ * Pull per-step captions straight out of a chart's own `%% tooltip: text`
+ * annotations, in the same top-to-bottom order messages/notes animate in.
+ * Falls back to an empty string for any step left un-annotated so indices
+ * still line up with `stepCount`.
+ */
+function captionsFromChart(chart: string): string[] {
+  const model = parseSequenceDiagram(chart)
+  return model.events
+    .filter((e) => e.kind === "message" || e.kind === "note")
+    .map((e) => e.explanation ?? "")
 }
 
 export interface JourneyPlayerProps extends Omit<SequenceLayoutOptions, "animateIn" | "speed"> {
@@ -81,6 +99,8 @@ export function JourneyPlayer({
   const [playing, setPlaying] = useState(false)
   const [speed, setSpeed] = useState<number>(1)
   const [captionIndex, setCaptionIndex] = useState(-1)
+  const [showCode, setShowCode] = useState(false)
+  const [copied, setCopied] = useState(false)
   const slide = slides[index]
   const atStart = index === 0
   const atEnd = index === slides.length - 1
@@ -98,6 +118,16 @@ export function JourneyPlayer({
     () => getStepTiming(parseSequenceDiagram(slide.chart).participants.length, speed),
     [slide.chart, speed],
   )
+  // Prefer explicit `messageCaptions` when provided; otherwise read the
+  // step-through commentary straight from the chart's own `%% tooltip:`
+  // annotations, so a single Mermaid source drives both the hover tooltip
+  // and the live caption.
+  const captions = useMemo(
+    () => slide.messageCaptions ?? captionsFromChart(slide.chart),
+    [slide],
+  )
+  const hasCaptions = captions.some((c) => c.length > 0)
+  const trimmedChart = useMemo(() => slide.chart.trim(), [slide.chart])
 
   /** Manual navigation (arrows, dots, keyboard) always stops autoplay. */
   function goTo(next: number) {
@@ -132,19 +162,34 @@ export function JourneyPlayer({
     return () => clearTimeout(id)
   }, [playing, index, slides, speed, autoPlayIntervalMs])
 
-  // Reveal each of this slide's messageCaptions in lockstep with its edge
-  // animating in, so "the browser makes a request..." fades in right as
-  // that arrow appears, then holds until the next one.
+  // Reveal each of this slide's captions in lockstep with its edge animating
+  // in, so "the browser makes a request..." fades in right as that arrow
+  // appears, then holds until the next one.
   useEffect(() => {
     setCaptionIndex(-1)
-    const captions = slide.messageCaptions
-    if (!captions || captions.length === 0) return
+    if (!hasCaptions) return
     const count = Math.min(captions.length, stepCount)
     const timers = Array.from({ length: count }, (_, i) =>
       setTimeout(() => setCaptionIndex(i), timing.actorSettleDelay + i * timing.stepStaggerMs),
     )
     return () => timers.forEach(clearTimeout)
-  }, [slide, stepCount, timing])
+  }, [slide, captions, hasCaptions, stepCount, timing])
+
+  // Copied state and code visibility are per-slide; jumping to a new step
+  // shouldn't leave a stale "Copied!" checkmark showing.
+  useEffect(() => {
+    setCopied(false)
+  }, [slide])
+
+  async function handleCopyCode() {
+    try {
+      await navigator.clipboard.writeText(trimmedChart)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1600)
+    } catch {
+      // Clipboard API unavailable (e.g. insecure context) — fail silently.
+    }
+  }
 
   function handleKeyDown(event: React.KeyboardEvent) {
     if (event.key === "ArrowRight") {
@@ -242,7 +287,7 @@ export function JourneyPlayer({
               aria-label="Previous step"
               disabled={atStart}
               onClick={() => goTo(index - 1)}
-              className="flex items-center justify-center p-1.5 text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+              className="flex items-center justify-center border-r border-border p-1.5 text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
             >
               <ChevronLeft className="size-4" aria-hidden />
             </button>
@@ -251,18 +296,30 @@ export function JourneyPlayer({
               aria-label="Next step"
               disabled={atEnd}
               onClick={() => goTo(index + 1)}
-              className="flex items-center justify-center border-l border-border p-1.5 text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+              className="flex items-center justify-center p-1.5 text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
             >
               <ChevronRight className="size-4" aria-hidden />
             </button>
           </div>
+          <button
+            type="button"
+            aria-pressed={showCode}
+            aria-label={showCode ? "Hide diagram code" : "Show diagram code"}
+            onClick={() => setShowCode((v) => !v)}
+            className={cn(
+              "flex items-center gap-1.5 border px-2.5 py-1.5 text-xs font-medium transition-colors",
+              showCode
+                ? "border-transparent bg-primary text-primary-foreground"
+                : "border-border text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Code2 className="size-3.5" aria-hidden />
+            Code
+          </button>
         </div>
       </div>
 
-      <div
-        className="overflow-hidden border border-border bg-card"
-        style={{ height }}
-      >
+      <div className="relative overflow-hidden border border-border bg-card" style={{ height }}>
         <SequenceDiagram
           key={slide.id}
           chart={slide.chart}
@@ -273,20 +330,56 @@ export function JourneyPlayer({
           messageGap={messageGap}
           showBottomActors={showBottomActors}
         />
+        {showCode ? (
+          <div className="absolute inset-0 flex flex-col bg-card">
+            <div className="flex items-center justify-between border-b border-border px-3 py-2">
+              <span className="font-mono text-xs text-muted-foreground">
+                {slide.id}.mmd
+              </span>
+              <button
+                type="button"
+                onClick={handleCopyCode}
+                className={cn(
+                  "flex items-center gap-1.5 border px-2 py-1 text-[11px] font-medium transition-colors",
+                  copied
+                    ? "border-transparent bg-seq-accent text-seq-accent-foreground"
+                    : "border-border text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {copied ? (
+                  <>
+                    <Check className="size-3" aria-hidden />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="size-3" aria-hidden />
+                    Copy code
+                  </>
+                )}
+              </button>
+            </div>
+            <pre className="flex-1 overflow-auto p-3">
+              <code className="font-mono text-xs leading-relaxed text-foreground">
+                {trimmedChart}
+              </code>
+            </pre>
+          </div>
+        ) : null}
       </div>
 
-      {slide.messageCaptions && slide.messageCaptions.length > 0 ? (
+      {hasCaptions ? (
         <div
           key={`${slide.id}-live-caption`}
           aria-live="polite"
           className="flex min-h-10 items-center border border-border bg-muted px-3 py-2"
         >
-          {captionIndex >= 0 ? (
+          {captionIndex >= 0 && captions[captionIndex] ? (
             <p key={captionIndex} className="seq-enter text-sm leading-relaxed text-foreground">
               <span className="mr-2 text-xs font-medium tabular-nums text-seq-accent">
-                {captionIndex + 1}/{slide.messageCaptions.length}
+                {captionIndex + 1}/{captions.length}
               </span>
-              {slide.messageCaptions[captionIndex]}
+              {captions[captionIndex]}
             </p>
           ) : (
             <p className="text-sm text-muted-foreground">Watch the diagram to follow along…</p>

@@ -131,6 +131,7 @@ export function buildSequenceGraph(
     y: number
     width: number
     text: string
+    explanation?: string
     enterDelay: number
   }
   const notes: NoteLayout[] = []
@@ -193,6 +194,7 @@ export function buildSequenceGraph(
         y,
         width: nw,
         text: ev.text,
+        explanation: ev.explanation,
         enterDelay: nextStepDelay(),
       })
       y += NOTE_H + 20
@@ -321,6 +323,7 @@ export function buildSequenceGraph(
         text: n.text,
         width: n.width,
         height: NOTE_H,
+        explanation: n.explanation,
         animateIn,
         enterDelay: n.enterDelay,
       },

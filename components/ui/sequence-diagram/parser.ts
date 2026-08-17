@@ -186,6 +186,7 @@ export function parseSequenceDiagram(input: string): SeqModel {
         placement,
         participantIds: ids,
         text: noteMatch[3].trim(),
+        explanation: messageExplanation,
       })
       continue
     }
