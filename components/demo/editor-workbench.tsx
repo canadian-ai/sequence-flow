@@ -24,34 +24,88 @@ type TabId = (typeof tabs)[number]["id"]
 type JourneyFormat = "markdown" | "json"
 
 const initialJourneyJson = JSON.stringify(architectureJourney, null, 2)
-const initialJourneyMarkdown = `# Request lifecycle
+const initialJourneyMarkdown = `# Progressive web architecture
 
-A progressive walkthrough authored as Markdown. Each \`##\` heading is a slide.
+A progressive walkthrough that starts with a browser and web server, then adds persistence, caching, and a grouped server tier.
 
-## Step 1 — Request
-<!-- @id: request -->
-<!-- @message: The browser sends the request to the API. -->
-The browser begins the request lifecycle.
+## Step 1 — Client and server
+<!-- @id: client-server -->
+<!-- @message: The browser sends an HTTP GET request for /products directly to the web server. -->
+<!-- @message: The web server renders the page and sends back a 200 OK with the HTML. -->
+We start with the simplest possible shape: a browser talks directly to a web server over HTTP.
 
 \`\`\`mermaid
 sequenceDiagram
   participant B as Browser
-  participant A as API
-  B->>A: GET /products
+  participant W as Web Server
+  B->>W: HTTP GET /products
+  W-->>B: 200 OK (HTML)
 \`\`\`
 
-## Step 2 — Response
-<!-- @id: response -->
-<!-- @message: The browser sends the request to the API. -->
-<!-- @message: The API returns the product payload. -->
-The response completes the round trip.
+## Step 2 — Adding a database
+<!-- @id: add-database -->
+<!-- @message: The browser requests /products, same as before. -->
+<!-- @message: This time the web server can't answer alone, so it queries the database for the product rows. -->
+<!-- @message: The database returns the matching rows to the web server. -->
+<!-- @message: The web server assembles the HTML from those rows and responds 200 OK. -->
+The server can't hold everything in memory, so it delegates persistence to a dedicated database and queries it per request.
 
 \`\`\`mermaid
 sequenceDiagram
   participant B as Browser
-  participant A as API
-  B->>A: GET /products
-  A-->>B: 200 OK
+  participant W as Web Server
+  participant D as Database
+  B->>W: HTTP GET /products
+  W->>D: SELECT * FROM products
+  D-->>W: Rows
+  W-->>B: 200 OK (HTML)
+\`\`\`
+
+## Step 3 — Introducing a cache
+<!-- @id: add-cache -->
+<!-- @message: The browser's request comes in as usual. -->
+<!-- @message: The web server checks the cache first instead of going straight to the database. -->
+<!-- @message: On this request, the cache doesn't have it yet — a miss. -->
+<!-- @message: So the web server falls back to the database for the real query. -->
+<!-- @message: The database returns the rows. -->
+<!-- @message: The web server writes the result back into the cache for next time. -->
+<!-- @message: Finally it responds to the browser with the HTML. -->
+Repeated queries for the same data are wasteful. A cache sits in front of the database and short-circuits the round trip on a hit.
+
+\`\`\`mermaid
+sequenceDiagram
+  participant B as Browser
+  participant W as Web Server
+  participant C as Cache
+  participant D as Database
+  B->>W: HTTP GET /products
+  W->>C: GET products
+  C-->>W: Cache miss %% duration: 2600
+  W->>D: SELECT * FROM products
+  D-->>W: Rows
+  W->>C: SET products
+  W-->>B: 200 OK (HTML)
+\`\`\`
+
+## Step 4 — The full picture
+<!-- @id: full-picture -->
+<!-- @message: The browser makes its request for /products. -->
+<!-- @message: The server tier checks the cache — and this time, it's warm. -->
+<!-- @message: The cache hit means the database is never touched. The server responds immediately with 200 OK. -->
+Group the backend into a single tier and the whole request path reads as one coherent flow: browser in, cache-aware server tier, database of record.
+
+\`\`\`mermaid
+sequenceDiagram
+  participant B as Browser
+  box Server Tier
+  participant W as Web Server
+  participant C as Cache
+  participant D as Database
+  end
+  B->>W: HTTP GET /products
+  W->>C: GET products
+  C-->>W: Cache hit %% duration: 3200
+  W-->>B: 200 OK (HTML)
 \`\`\``
 
 const sequenceCode = `import { SequenceDiagram } from "@/components/ui/sequence-diagram"
