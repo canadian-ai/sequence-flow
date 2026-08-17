@@ -11,3 +11,83 @@
 .react-flow__edgelabel-renderer {
   z-index: 1000;
 }
+
+/**
+ * Journey-slide entrance: fade in with a slight rise, staggered per node via
+ * an inline `animation-delay` (see layout.ts `enterDelayOf`). Opt-in only —
+ * applied via the `seq-enter` class when `animateIn` is set.
+ */
+@keyframes seq-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.seq-enter {
+  animation: seq-enter 320ms ease-out both;
+}
+
+/**
+ * Message edge entrance, in two parts, timed to each message's chronological
+ * `enterDelay` (see layout.ts `nextStepDelay`) so messages appear one at a
+ * time like a step-through playback rather than all at once:
+ *
+ * 1. `seq-edge-pop` snaps the line/label to fully visible the instant the
+ *    message's turn arrives — no fade, so it never reads as sluggish.
+ * 2. `seq-edge-dot` flies a small semicircle "packet" along that same path
+ *    (via `offset-path`, set inline per-edge in edges.tsx since each path is
+ *    unique) from source to target, arriving right as the line pops in.
+ *    This is the primary motion cue — it makes the arrival feel immediate
+ *    rather than the previous plain opacity fade.
+ */
+@keyframes seq-edge-pop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.seq-edge-pop {
+  animation: seq-edge-pop 1ms both;
+}
+
+@keyframes seq-edge-travel {
+  0% {
+    offset-distance: 0%;
+    opacity: 1;
+  }
+  80% {
+    offset-distance: 80%;
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
+.seq-edge-dot {
+  offset-distance: 0%;
+  animation-name: seq-edge-travel;
+  animation-timing-function: ease-in;
+  animation-fill-mode: both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seq-enter,
+  .seq-edge-pop {
+    animation-duration: 1ms;
+    animation-delay: 0ms !important;
+  }
+  .seq-edge-dot {
+    animation: none;
+    opacity: 0;
+  }
+}

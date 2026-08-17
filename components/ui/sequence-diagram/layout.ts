@@ -19,6 +19,51 @@ export interface HandleSpec {
   top: number
 }
 
+/** Base (speed = 1) entrance-animation timing constants, shared with JourneyPlayer. */
+const BASE_ACTOR_STAGGER_MS = 70
+/** How long the traveling dot takes to fly from source to target along an edge. */
+const BASE_TRAVEL_MS = 360
+// Give each message's dot time to land (BASE_TRAVEL_MS) plus a short beat
+// before the next one launches, so packets arrive one at a time instead of
+// overlapping mid-flight.
+const BASE_STEP_STAGGER_MS = BASE_TRAVEL_MS + 140
+const BASE_SETTLE_PAD_MS = 150
+
+export interface StepSchedule {
+  /** Delay (ms) before the actor boxes have finished settling in. */
+  actorSettleDelay: number
+  /**
+   * Absolute entrance delay (ms) for each message/note step, in
+   * chronological (top-to-bottom) order. `delays[i]` is when step `i`
+   * animates in; the gap to the next step defaults to the base stagger but
+   * stretches to honor that step's own `%% duration: <ms>` override, if set.
+   */
+  delays: number[]
+}
+
+/**
+ * Compute a chart's `animateIn` schedule: actors fade in first
+ * (`actorSettleDelay` covers all of them), then messages/notes reveal one at
+ * a time, each holding for its own `durationMs` (or the default stagger)
+ * before the next one appears. Both `buildSequenceGraph` and JourneyPlayer
+ * call this on the same parsed model so the diagram's own entrance timing
+ * and the live caption stay in lockstep, including any per-step duration
+ * overrides from the chart's `%% duration:` annotations.
+ */
+export function getStepSchedule(model: SeqModel, speed = 1): StepSchedule {
+  const actorSettleDelay =
+    model.participants.length * BASE_ACTOR_STAGGER_MS * speed + BASE_SETTLE_PAD_MS * speed
+  const delays: number[] = []
+  let cursor = actorSettleDelay
+  for (const ev of model.events) {
+    if (ev.kind !== "message" && ev.kind !== "note") continue
+    delays.push(cursor)
+    const hold = ev.durationMs != null ? ev.durationMs * speed : BASE_STEP_STAGGER_MS * speed
+    cursor += hold
+  }
+  return { actorSettleDelay, delays }
+}
+
 export interface SequenceGraph {
   nodes: Node[]
   edges: Edge[]
@@ -34,11 +79,23 @@ export function buildSequenceGraph(
   const COL_GAP = options.columnGap ?? 220
   const MSG_GAP = options.messageGap ?? 56
   const showBottom = options.showBottomActors ?? true
+  const animateIn = options.animateIn ?? false
+  const speed = options.speed ?? 1
+  const STAGGER_MS = BASE_ACTOR_STAGGER_MS * speed
 
   const index = new Map<string, number>()
   model.participants.forEach((p, i) => index.set(p.id, i))
   const xOf = (id: string) =>
     MARGIN_X + ACTOR_W / 2 + (index.get(id) ?? 0) * COL_GAP
+  /** Entrance delay (ms) for a node anchored to participant `id`, staggered left-to-right. */
+  const enterDelayOf = (id: string) => (index.get(id) ?? 0) * STAGGER_MS
+
+  // Messages and notes animate in one at a time, in chronological (top-to-bottom)
+  // order, once the actor boxes have finished settling in — each holding for
+  // its own `%% duration:` override (if set) before the next one appears.
+  const { delays: stepDelays } = getStepSchedule(model, speed)
+  let stepIndex = 0
+  const nextStepDelay = () => stepDelays[stepIndex++]
 
   const hasBoxes = model.boxes.length > 0
   const headY = MARGIN_TOP + (hasBoxes ? BOX_LABEL_H : 0)
@@ -93,6 +150,8 @@ export function buildSequenceGraph(
     y: number
     width: number
     text: string
+    explanation?: string
+    enterDelay: number
   }
   const notes: NoteLayout[] = []
 
@@ -126,6 +185,9 @@ export function buildSequenceGraph(
           from: ev.from,
           to: ev.to,
           explanation: ev.explanation,
+          animateIn,
+          enterDelay: nextStepDelay(),
+          travelMs: BASE_TRAVEL_MS * speed,
         },
       })
     } else if (ev.kind === "note") {
@@ -151,6 +213,8 @@ export function buildSequenceGraph(
         y,
         width: nw,
         text: ev.text,
+        explanation: ev.explanation,
+        enterDelay: nextStepDelay(),
       })
       y += NOTE_H + 20
     } else if (ev.kind === "activate") {
@@ -191,6 +255,8 @@ export function buildSequenceGraph(
         width: right - left,
         height: height - MARGIN_TOP * 1.5,
         explanation: box.explanation,
+        animateIn,
+        enterDelay: Math.min(...box.participantIds.map(enterDelayOf)),
       },
       draggable: false,
       selectable: false,
@@ -237,6 +303,8 @@ export function buildSequenceGraph(
         width: ACTOR_W,
         explanation: p.explanation,
         placement: "top",
+        animateIn,
+        enterDelay: enterDelayOf(p.id),
       },
       draggable: false,
       selectable: false,
@@ -254,6 +322,8 @@ export function buildSequenceGraph(
           width: ACTOR_W,
           explanation: p.explanation,
           placement: "bottom",
+          animateIn,
+          enterDelay: enterDelayOf(p.id),
         },
         draggable: false,
         selectable: false,
@@ -268,7 +338,14 @@ export function buildSequenceGraph(
       id: n.id,
       type: "seqNote",
       position: { x: n.x, y: n.y },
-      data: { text: n.text, width: n.width, height: NOTE_H },
+      data: {
+        text: n.text,
+        width: n.width,
+        height: NOTE_H,
+        explanation: n.explanation,
+        animateIn,
+        enterDelay: n.enterDelay,
+      },
       draggable: false,
       selectable: false,
       zIndex: 6,

@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+
 import { Handle, type NodeProps, Position } from "@xyflow/react"
 import { User } from "lucide-react"
 
@@ -17,6 +19,8 @@ export function SeqGroupNode({ data }: NodeProps) {
     width: number
     height: number
     explanation?: string
+    animateIn?: boolean
+    enterDelay?: number
   }
   const { hoveredBox, setBoxHover } = useSequenceHover()
   const hovered = hoveredBox === d.boxId
@@ -30,8 +34,13 @@ export function SeqGroupNode({ data }: NodeProps) {
         hovered
           ? "border-solid border-seq-accent bg-seq-accent/[0.08] ring-1 ring-seq-accent"
           : "border-dashed border-border",
+        d.animateIn ? "seq-enter" : undefined,
       )}
-      style={{ width: d.width, height: d.height }}
+      style={{
+        width: d.width,
+        height: d.height,
+        animationDelay: d.animateIn ? `${d.enterDelay ?? 0}ms` : undefined,
+      }}
       onMouseEnter={() => setBoxHover(d.boxId)}
       onMouseLeave={() => setBoxHover(null)}
       onFocus={() => setBoxHover(d.boxId)}
@@ -118,23 +127,35 @@ export function SeqActorNode({ data }: NodeProps) {
     width: number
     explanation?: string
     placement?: "top" | "bottom"
+    animateIn?: boolean
+    enterDelay?: number
   }
   const { activeParticipants, hoveredEdge, hoveredParticipant, setParticipantHover } =
     useSequenceHover()
   const active = activeParticipants.has(d.participant)
   const directHover = hoveredParticipant === d.participant
   const highlighted = active || directHover
+  // The same participant renders a top and (optionally) a bottom actor box that
+  // share hover state. Only the top box owns the tooltip, so hovering either one
+  // doesn't pop the explanation twice.
+  const isBottom = d.placement === "bottom"
+  const tooltipText = isBottom ? undefined : d.explanation
 
   return (
-    <SeqTooltip text={d.explanation} visible={directHover} placement={d.placement}>
+    <SeqTooltip text={tooltipText} visible={directHover} placement="top">
       <div
-        role={d.explanation ? "button" : undefined}
-        tabIndex={d.explanation ? 0 : undefined}
+        role={tooltipText ? "button" : undefined}
+        tabIndex={tooltipText ? 0 : undefined}
         className={cn(
           "flex h-[52px] cursor-default items-center justify-center gap-2 border bg-card px-3 text-center transition-colors",
           highlighted ? "border-seq-accent ring-1 ring-seq-accent" : "border-border",
+          d.animateIn ? "seq-enter" : undefined,
         )}
-        style={{ width: d.width, opacity: hoveredEdge && !active ? 0.45 : 1 }}
+        style={{
+          width: d.width,
+          opacity: hoveredEdge && !active ? 0.45 : 1,
+          animationDelay: d.animateIn ? `${d.enterDelay ?? 0}ms` : undefined,
+        }}
         onMouseEnter={() => setParticipantHover(d.participant)}
         onMouseLeave={() => setParticipantHover(null)}
         onFocus={() => setParticipantHover(d.participant)}
@@ -151,16 +172,41 @@ export function SeqActorNode({ data }: NodeProps) {
   )
 }
 
-/** Note / badge callout. */
+/** Note / badge callout. Hover reveals its explanation, if any. */
 export function SeqNoteNode({ data }: NodeProps) {
-  const d = data as { text: string; width: number; height: number }
+  const d = data as {
+    text: string
+    width: number
+    height: number
+    explanation?: string
+    animateIn?: boolean
+    enterDelay?: number
+  }
+  const [hovered, setHovered] = useState(false)
+
   return (
-    <div
-      className="flex items-center justify-center border border-border bg-muted px-3 py-2 text-center text-xs leading-snug text-muted-foreground"
-      style={{ width: d.width, minHeight: d.height }}
-    >
-      {d.text}
-    </div>
+    <SeqTooltip text={d.explanation} visible={hovered}>
+      <div
+        role={d.explanation ? "button" : undefined}
+        tabIndex={d.explanation ? 0 : undefined}
+        className={cn(
+          "flex cursor-default items-center justify-center border border-border bg-muted px-3 py-2 text-center text-xs leading-snug text-muted-foreground transition-colors",
+          d.explanation && hovered ? "border-seq-accent text-foreground" : undefined,
+          d.animateIn ? "seq-enter" : undefined,
+        )}
+        style={{
+          width: d.width,
+          minHeight: d.height,
+          animationDelay: d.animateIn ? `${d.enterDelay ?? 0}ms` : undefined,
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onFocus={() => setHovered(true)}
+        onBlur={() => setHovered(false)}
+      >
+        {d.text}
+      </div>
+    </SeqTooltip>
   )
 }
 
