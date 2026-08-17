@@ -28,9 +28,10 @@ const BASE_ACTOR_STAGGER_MS = 70
 const BASE_TRAVEL_MS = 650
 /**
  * Pace default message reveals around a conservative sixth-grade reading rate.
- * Research puts sixth-grade comprehension-based silent reading near 165 WPM;
- * we use 160 WPM and add a short orientation beat because diagram labels are
- * technical fragments rather than continuous prose.
+ * Comprehension-based silent reading research reports roughly 165 WPM for
+ * sixth graders, while fluency guidance places grade-six targets around the
+ * 110–160+ WPM range. We use 160 WPM and add a short orientation beat because
+ * diagram labels are technical fragments rather than continuous prose.
  */
 const READING_WPM = 160
 const MS_PER_WORD = 60_000 / READING_WPM
