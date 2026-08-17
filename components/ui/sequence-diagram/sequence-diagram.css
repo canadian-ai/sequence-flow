@@ -80,6 +80,84 @@
   animation-fill-mode: both;
 }
 
+/**
+ * JourneyPlayer mobile layout.
+ *
+ * The player header already allows its outer row to wrap, but the control
+ * cluster inside it is intentionally a single horizontal flex row on desktop.
+ * On narrow screens that row can exceed the viewport and force the entire
+ * walkthrough wider than the page. Keep the desktop layout untouched and let
+ * the control groups wrap into compact rows below the slide title on mobile.
+ */
+@media (max-width: 640px) {
+  [aria-roledescription="carousel"] {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  [aria-roledescription="carousel"] > div:first-child {
+    align-items: stretch;
+  }
+
+  [aria-roledescription="carousel"] > div:first-child > div:first-child {
+    width: 100%;
+    min-width: 0;
+  }
+
+  [aria-roledescription="carousel"] > div:first-child > div:last-child {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
+  [aria-roledescription="carousel"] > div:first-child > div:last-child > div {
+    max-width: 100%;
+    flex-shrink: 0;
+  }
+
+  /* Put slide dots on their own lightweight row and let the actual controls
+     wrap naturally underneath instead of squeezing into one line. */
+  [aria-roledescription="carousel"] > div:first-child > div:last-child > div:first-child {
+    flex-basis: 100%;
+  }
+
+  /* Keep the diagram/code viewport bounded by the phone rather than the
+     desktop-oriented fixed 420px height. Inline height is overridden only on
+     mobile so the public `height` prop still behaves exactly as before on
+     larger screens. */
+  [aria-roledescription="carousel"] > div:nth-child(2) {
+    width: 100%;
+    min-width: 0;
+    height: clamp(300px, 56vh, 380px) !important;
+  }
+
+  [aria-roledescription="carousel"] pre {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [aria-roledescription="carousel"] pre code {
+    display: block;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  /* Keep the live message caption and slide commentary inside the viewport
+     even when they contain long URLs, identifiers, or code-like tokens. */
+  [aria-roledescription="carousel"] p,
+  [aria-roledescription="carousel"] span {
+    overflow-wrap: anywhere;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .seq-enter,
   .seq-edge-pop {
