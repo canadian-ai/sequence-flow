@@ -1,11 +1,10 @@
 import Image from "next/image"
 import Link from "next/link"
 
-import { InstallCommand } from "@/components/install-command"
-import { JourneyPlayer, SequenceDiagram } from "@/components/ui/sequence-diagram"
-import { Playground } from "@/components/demo/playground"
+import { EditorWorkbench } from "@/components/demo/editor-workbench"
 import { requestLifecycleChart } from "@/components/demo/examples"
-import { architectureJourney } from "@/components/demo/journeys"
+import { InstallCommand } from "@/components/install-command"
+import { SequenceDiagram } from "@/components/ui/sequence-diagram"
 
 const install =
   "npx shadcn@latest add https://sequence-flow.canadian-ai.app/r/sequence-diagram.json"
@@ -20,8 +19,8 @@ const features = [
     body: "Pan, zoom, fit, and inspect flows with an interactive canvas that drops into an existing React app.",
   },
   {
-    title: "Sequence primitives",
-    body: "Render activations, returns, notes, self-messages, actors, and participant grouping boxes.",
+    title: "Journeys",
+    body: "Pass an array of JourneySlide objects to turn multiple sequence diagrams into a progressive technical walkthrough.",
   },
   {
     title: "Themeable",
@@ -29,17 +28,17 @@ const features = [
   },
   {
     title: "Agent-friendly",
-    body: "Keep the diagram authored as text so developers and coding agents can generate and revise it easily.",
+    body: "Keep diagrams and journeys as portable text and data so developers and coding agents can generate and revise them easily.",
   },
   {
-    title: "Read-only by design",
-    body: "Use it for architecture docs, request traces, protocol walkthroughs, and technical explanations.",
+    title: "Copy and paste",
+    body: "Preview the exact React usage and copy complete examples directly from the editor into your application.",
   },
 ]
 
 export default function Page() {
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 py-10 sm:py-16">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 overflow-x-hidden px-4 py-8 sm:px-6 sm:py-16">
       <header className="flex flex-col gap-7 border-b border-border pb-12">
         <Link
           href="https://canadian-ai.ca"
@@ -69,17 +68,16 @@ export default function Page() {
             </span>
           </div>
           <h1 className="max-w-4xl text-balance font-serif text-4xl font-bold tracking-tight sm:text-6xl">
-            Sequence diagrams for React Flow.
+            Sequence diagrams and journeys for React Flow.
           </h1>
-          <p className="max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">
-            A lightweight developer primitive that turns Mermaid
+          <p className="max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
+            Turn Mermaid
             <code className="mx-1 font-mono text-sm text-foreground">sequenceDiagram</code>
-            syntax into an interactive React Flow canvas. Install the component,
-            keep the source as text, and use it anywhere in your React app.
+            syntax into an interactive canvas, or chain multiple diagrams into a guided journey. Install the component, keep the source portable, and copy complete React examples directly from the editor.
           </p>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex min-w-0 flex-col gap-3">
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Install with shadcn
           </span>
@@ -90,32 +88,20 @@ export default function Page() {
         </div>
       </header>
 
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <section className="min-w-0 flex flex-col gap-4">
+        <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between sm:gap-2">
           <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-            Live playground
+            Live editor
           </h2>
           <span className="text-xs text-muted-foreground">
-            Paste Mermaid, tune the diagram, then export code or PNG
+            Switch between sequence flows and multi-step journeys
           </span>
         </div>
-        <Playground />
+        <EditorWorkbench />
       </section>
 
-      <section className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
-            Progressive walkthroughs
-          </h2>
-          <span className="text-xs text-muted-foreground">
-            Chain multiple diagrams into a technical slideshow
-          </span>
-        </div>
-        <JourneyPlayer slides={architectureJourney} />
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <div className="flex items-baseline justify-between gap-4">
+      <section className="min-w-0 flex flex-col gap-4">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
           <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
             Request lifecycle example
           </h2>
@@ -123,7 +109,7 @@ export default function Page() {
             Drag to pan, hover a box or message for details
           </span>
         </div>
-        <div className="h-[520px] overflow-hidden border border-border bg-card">
+        <div className="h-[420px] min-w-0 overflow-hidden border border-border bg-card sm:h-[520px]">
           <SequenceDiagram chart={requestLifecycleChart} className="size-full" />
         </div>
       </section>
@@ -134,8 +120,7 @@ export default function Page() {
             Built for developers
           </h2>
           <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Sequence Flow intentionally stays narrow: one installable visualization
-            primitive, with no product workspace or proprietary runtime attached.
+            Sequence Flow intentionally stays narrow: installable visualization primitives, with no product workspace or proprietary runtime attached.
           </p>
         </div>
         <div className="grid gap-px overflow-hidden border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
