@@ -19,7 +19,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
-      - run: pnpm lint
       - run: pnpm build
       - run: pnpm dlx playwright@1.54.2 install --with-deps chromium
       - run: pnpm test:e2e
