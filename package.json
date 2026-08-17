@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "pnpm dlx vitest@3.2.4 run",
+    "test": "pnpm dlx vitest@3.2.4 run tests/*.test.ts",
     "test:e2e": "pnpm dlx @playwright/test@1.54.2 test"
   },
   "dependencies": {
