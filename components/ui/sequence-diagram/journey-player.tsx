@@ -1,7 +1,15 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Check, ChevronLeft, ChevronRight, Code2, Copy, Layers, Pause, Play } from "lucide-react"
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Pause,
+  Play,
+  Repeat2,
+} from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -12,51 +20,25 @@ import type { SequenceLayoutOptions } from "./types"
 
 export interface JourneySlide {
   id: string
-  /** Short heading shown above the diagram, e.g. "Step 2: Adding a database". */
   title?: string
-  /** Optional commentary shown below the diagram, explaining what changed in this step. */
   caption?: string
-  /** Mermaid-flavored sequence diagram definition for this step. */
   chart: string
-  /**
-   * Optional per-edge commentary, e.g. ["The browser sends an HTTP GET
-   * request.", "The server responds with a 200 OK and HTML."]. Aligned by
-   * position to this chart's messages and notes in the order they appear
-   * top-to-bottom — the same order they animate in. As each one reveals
-   * during playback, its caption fades in below the diagram.
-   *
-   * Optional — when omitted, captions are read straight from the chart's own
-   * `%% tooltip: text` annotations (see the sequence-diagram parser), so the
-   * Mermaid source stays the single source of truth for both the hover
-   * tooltip and the step-through caption. Only pass this to override that.
-   */
   messageCaptions?: string[]
 }
 
-/**
- * Pull per-step captions straight out of a chart's own `%% tooltip: text`
- * annotations, in the same top-to-bottom order messages/notes animate in.
- * Falls back to an empty string for any step left un-annotated so indices
- * still line up with `stepCount`.
- */
 function captionsFromChart(chart: string): string[] {
   const model = parseSequenceDiagram(chart)
   return model.events
-    .filter((e) => e.kind === "message" || e.kind === "note")
-    .map((e) => e.explanation ?? "")
+    .filter((event) => event.kind === "message" || event.kind === "note")
+    .map((event) => event.explanation ?? "")
 }
 
-export interface JourneyPlayerProps extends Omit<SequenceLayoutOptions, "animateIn" | "speed"> {
+export interface JourneyPlayerProps extends Omit<SequenceLayoutOptions, "animateIn"> {
   slides: JourneySlide[]
   className?: string
   /** Height of the diagram viewport. Defaults to 420px. */
   height?: number
-  /**
-   * Fixed dwell time (ms) per slide during autoplay. When omitted, dwell
-   * time is estimated from the slide's caption length so slides with more
-   * commentary to read stay on screen longer. Scaled by the playback speed
-   * control regardless.
-   */
+  /** Fixed dwell time per slide during autoplay. */
   autoPlayIntervalMs?: number
 }
 
@@ -64,27 +46,22 @@ const MIN_DWELL_MS = 2600
 const MAX_DWELL_MS = 7000
 const MS_PER_CAPTION_CHAR = 30
 
-const SPEEDS = [
-  { label: "Fast", value: 0.6 },
-  { label: "Normal", value: 1 },
-  { label: "Slow", value: 2 },
-] as const
-
-/** Estimate how long a slide should stay on screen during autoplay, based on caption length. */
 function dwellTimeFor(slide: JourneySlide, speed: number, override?: number) {
   const base =
     override ??
     (slide.caption
-      ? Math.min(MAX_DWELL_MS, Math.max(MIN_DWELL_MS, MIN_DWELL_MS + slide.caption.length * MS_PER_CAPTION_CHAR))
+      ? Math.min(
+          MAX_DWELL_MS,
+          Math.max(MIN_DWELL_MS, MIN_DWELL_MS + slide.caption.length * MS_PER_CAPTION_CHAR),
+        )
       : MIN_DWELL_MS)
   return base * speed
 }
 
 /**
- * Plays a sequence of diagrams as a slideshow — each "slide" is a distinct
- * Mermaid chart with an optional title and caption. Nodes fade + rise in on
- * arrival. Navigate with the prev/next arrows, the dot indicator, or the
- * left/right arrow keys while the player is focused.
+ * Plays a sequence of diagrams as a focused journey. The player intentionally
+ * owns only navigation/playback controls; editing, themes, source format, and
+ * other authoring UI belong to the parent experience.
  */
 export function JourneyPlayer({
   slides,
@@ -94,54 +71,30 @@ export function JourneyPlayer({
   messageGap,
   showBottomActors,
   autoPlayIntervalMs,
+  speed = 1,
 }: JourneyPlayerProps) {
   const [index, setIndex] = useState(0)
   const [playing, setPlaying] = useState(false)
-  const [speed, setSpeed] = useState<number>(1)
+  const [looping, setLooping] = useState(false)
   const [captionIndex, setCaptionIndex] = useState(-1)
-  const [showCode, setShowCode] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [showJourneyCode, setShowJourneyCode] = useState(false)
-  const [journeyCopied, setJourneyCopied] = useState(false)
+
   const slide = slides[index]
   const atStart = index === 0
   const atEnd = index === slides.length - 1
   const canPlay = slides.length > 1
 
-  // The full journey as one editable source: every slide's Mermaid chart,
-  // in order, each labeled with its step number and title. This is the
-  // whole customizable journey at a glance — including any `%% tooltip:` /
-  // `%% duration:` annotations — not just the currently visible slide.
-  const journeyCode = useMemo(
-    () =>
-      slides
-        .map((s, i) => {
-          const heading = s.title ?? `Step ${i + 1}`
-          return `%% ==== ${heading} ====\n${s.chart.trim()}`
-        })
-        .join("\n\n"),
-    [slides],
+  const schedule = useMemo(
+    () => (slide ? getStepSchedule(parseSequenceDiagram(slide.chart), speed) : { delays: [] }),
+    [slide, speed],
   )
 
-  // The exact same per-step entrance schedule the diagram itself animates
-  // to (including any `%% duration:` overrides on individual steps), so the
-  // live caption below tracks it exactly without duplicating layout.ts's logic.
-  const schedule = useMemo(
-    () => getStepSchedule(parseSequenceDiagram(slide.chart), speed),
-    [slide.chart, speed],
-  )
-  // Prefer explicit `messageCaptions` when provided; otherwise read the
-  // step-through commentary straight from the chart's own `%% tooltip:`
-  // annotations, so a single Mermaid source drives both the hover tooltip
-  // and the live caption.
   const captions = useMemo(
-    () => slide.messageCaptions ?? captionsFromChart(slide.chart),
+    () => (slide ? slide.messageCaptions ?? captionsFromChart(slide.chart) : []),
     [slide],
   )
-  const hasCaptions = captions.some((c) => c.length > 0)
-  const trimmedChart = useMemo(() => slide.chart.trim(), [slide.chart])
+  const hasCaptions = captions.some((caption) => caption.length > 0)
 
-  /** Manual navigation (arrows, dots, keyboard) always stops autoplay. */
   function goTo(next: number) {
     setPlaying(false)
     setIndex(Math.max(0, Math.min(slides.length - 1, next)))
@@ -153,79 +106,54 @@ export function JourneyPlayer({
       setPlaying(false)
       return
     }
-    // Replaying from a finished journey starts over from the top.
-    if (atEnd) setIndex(0)
+    if (atEnd && !looping) setIndex(0)
     setPlaying(true)
   }
 
-  // Advance one slide per dwell period while playing; each advance remounts
-  // the diagram (via `key={slide.id}` below) so the node entrance animation
-  // replays for every step, exactly like clicking "next" manually.
-  useEffect(() => {
-    if (!playing) return
-    if (index === slides.length - 1) {
-      setPlaying(false)
-      return
+  async function handleCopy() {
+    if (!slide) return
+    try {
+      await navigator.clipboard.writeText(slide.chart.trim())
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1600)
+    } catch {
+      // Clipboard API can be unavailable in insecure contexts.
     }
-    // Never cut a slide short of its own step schedule — a `%% duration:`
-    // override on the last step should still get read in full during autoplay.
+  }
+
+  useEffect(() => {
+    if (!playing || !slide) return
+
     const scheduleFloor =
       schedule.delays.length > 0 ? schedule.delays[schedule.delays.length - 1] + 1200 * speed : 0
-    const dwell = Math.max(dwellTimeFor(slides[index], speed, autoPlayIntervalMs), scheduleFloor)
-    const id = setTimeout(() => {
-      setIndex((i) => Math.min(slides.length - 1, i + 1))
-    }, dwell)
-    return () => clearTimeout(id)
-  }, [playing, index, slides, speed, autoPlayIntervalMs, schedule])
+    const dwell = Math.max(dwellTimeFor(slide, speed, autoPlayIntervalMs), scheduleFloor)
 
-  // Reveal each of this slide's captions in lockstep with its edge animating
-  // in, so "the browser makes a request..." fades in right as that arrow
-  // appears, then holds until the next one.
+    if (atEnd) {
+      if (!looping) {
+        setPlaying(false)
+        return
+      }
+      const id = window.setTimeout(() => setIndex(0), dwell)
+      return () => window.clearTimeout(id)
+    }
+
+    const id = window.setTimeout(() => setIndex((current) => current + 1), dwell)
+    return () => window.clearTimeout(id)
+  }, [playing, looping, atEnd, slide, speed, autoPlayIntervalMs, schedule])
+
   useEffect(() => {
     setCaptionIndex(-1)
     if (!hasCaptions) return
     const count = Math.min(captions.length, schedule.delays.length)
-    const timers = Array.from({ length: count }, (_, i) =>
-      setTimeout(() => setCaptionIndex(i), schedule.delays[i]),
+    const timers = Array.from({ length: count }, (_, caption) =>
+      window.setTimeout(() => setCaptionIndex(caption), schedule.delays[caption]),
     )
-    return () => timers.forEach(clearTimeout)
+    return () => timers.forEach(window.clearTimeout)
   }, [slide, captions, hasCaptions, schedule])
 
-  // Copied state and code visibility are per-slide; jumping to a new step
-  // shouldn't leave a stale "Copied!" checkmark showing.
   useEffect(() => {
     setCopied(false)
   }, [slide])
-
-  async function handleCopyCode() {
-    try {
-      await navigator.clipboard.writeText(trimmedChart)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 1600)
-    } catch {
-      // Clipboard API unavailable (e.g. insecure context) — fail silently.
-    }
-  }
-
-  async function handleCopyJourneyCode() {
-    try {
-      await navigator.clipboard.writeText(journeyCode)
-      setJourneyCopied(true)
-      window.setTimeout(() => setJourneyCopied(false), 1600)
-    } catch {
-      // Clipboard API unavailable (e.g. insecure context) — fail silently.
-    }
-  }
-
-  function toggleShowCode() {
-    setShowJourneyCode(false)
-    setShowCode((v) => !v)
-  }
-
-  function toggleShowJourneyCode() {
-    setShowCode(false)
-    setShowJourneyCode((v) => !v)
-  }
 
   function handleKeyDown(event: React.KeyboardEvent) {
     if (event.key === "ArrowRight") {
@@ -252,9 +180,9 @@ export function JourneyPlayer({
       className={cn("flex flex-col gap-4 outline-none", className)}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-col gap-0.5">
+        <div className="flex min-w-0 flex-col gap-0.5">
           {slide.title ? (
-            <span className="text-sm font-medium text-foreground">{slide.title}</span>
+            <span className="truncate text-sm font-medium text-foreground">{slide.title}</span>
           ) : null}
           <span className="text-xs text-muted-foreground">
             Step {index + 1} of {slides.length}
@@ -262,62 +190,24 @@ export function JourneyPlayer({
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5" role="tablist" aria-label="Slides">
-            {slides.map((s, i) => (
+          <div className="flex items-center gap-1.5" role="tablist" aria-label="Journey steps">
+            {slides.map((item, itemIndex) => (
               <button
-                key={s.id}
+                key={item.id}
                 type="button"
                 role="tab"
-                aria-selected={i === index}
-                aria-label={`Go to step ${i + 1}${s.title ? `: ${s.title}` : ""}`}
-                onClick={() => goTo(i)}
+                aria-selected={itemIndex === index}
+                aria-label={`Go to step ${itemIndex + 1}${item.title ? `: ${item.title}` : ""}`}
+                onClick={() => goTo(itemIndex)}
                 className={cn(
                   "size-1.5 transition-colors",
-                  i === index ? "bg-primary" : "bg-border hover:bg-muted-foreground",
+                  itemIndex === index ? "bg-primary" : "bg-border hover:bg-muted-foreground",
                 )}
               />
             ))}
           </div>
-          <div
-            className="flex border border-border"
-            role="radiogroup"
-            aria-label="Playback speed"
-          >
-            {SPEEDS.map((s) => (
-              <button
-                key={s.value}
-                type="button"
-                role="radio"
-                aria-checked={speed === s.value}
-                aria-label={`${s.label} speed`}
-                onClick={() => setSpeed(s.value)}
-                className={cn(
-                  "px-2 py-1.5 text-xs transition-colors",
-                  s.value !== SPEEDS[SPEEDS.length - 1].value ? "border-r border-border" : undefined,
-                  speed === s.value
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
+
           <div className="flex border border-border">
-            {canPlay ? (
-              <button
-                type="button"
-                aria-label={playing ? "Pause" : atEnd ? "Replay journey" : "Play journey"}
-                onClick={togglePlay}
-                className="flex items-center justify-center border-r border-border p-1.5 text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {playing ? (
-                  <Pause className="size-4" aria-hidden />
-                ) : (
-                  <Play className="size-4" aria-hidden />
-                )}
-              </button>
-            ) : null}
             <button
               type="button"
               aria-label="Previous step"
@@ -332,43 +222,40 @@ export function JourneyPlayer({
               aria-label="Next step"
               disabled={atEnd}
               onClick={() => goTo(index + 1)}
-              className="flex items-center justify-center p-1.5 text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+              className="flex items-center justify-center border-r border-border p-1.5 text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
             >
               <ChevronRight className="size-4" aria-hidden />
             </button>
-          </div>
-          <div className="flex border border-border">
+            {canPlay ? (
+              <button
+                type="button"
+                aria-label={playing ? "Pause journey" : "Play journey"}
+                aria-pressed={playing}
+                onClick={togglePlay}
+                className="flex items-center justify-center border-r border-border p-1.5 text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {playing ? <Pause className="size-4" aria-hidden /> : <Play className="size-4" aria-hidden />}
+              </button>
+            ) : null}
             <button
               type="button"
-              aria-pressed={showCode}
-              aria-label={showCode ? "Hide this slide's code" : "Show this slide's code"}
-              title="This slide's Mermaid code"
-              onClick={toggleShowCode}
+              aria-label={looping ? "Disable autoplay loop" : "Enable autoplay loop"}
+              aria-pressed={looping}
+              onClick={() => setLooping((value) => !value)}
               className={cn(
-                "flex items-center gap-1.5 border-r border-border px-2.5 py-1.5 text-xs font-medium transition-colors",
-                showCode
-                  ? "border-transparent bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
+                "flex items-center justify-center border-r border-border p-1.5 transition-colors",
+                looping ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <Code2 className="size-3.5" aria-hidden />
-              Slide
+              <Repeat2 className="size-4" aria-hidden />
             </button>
             <button
               type="button"
-              aria-pressed={showJourneyCode}
-              aria-label={showJourneyCode ? "Hide the full journey code" : "Show the full journey code"}
-              title="Every slide's Mermaid code, in order — the whole customizable journey"
-              onClick={toggleShowJourneyCode}
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-colors",
-                showJourneyCode
-                  ? "border-transparent bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
+              aria-label={copied ? "Copied current diagram" : "Copy current diagram"}
+              onClick={handleCopy}
+              className="flex items-center justify-center p-1.5 text-muted-foreground transition-colors hover:text-foreground"
             >
-              <Layers className="size-3.5" aria-hidden />
-              Journey
+              {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
             </button>
           </div>
         </div>
@@ -385,79 +272,6 @@ export function JourneyPlayer({
           messageGap={messageGap}
           showBottomActors={showBottomActors}
         />
-        {showCode ? (
-          <div className="absolute inset-0 flex flex-col bg-card">
-            <div className="flex items-center justify-between border-b border-border px-3 py-2">
-              <span className="font-mono text-xs text-muted-foreground">
-                {slide.id}.mmd
-              </span>
-              <button
-                type="button"
-                onClick={handleCopyCode}
-                className={cn(
-                  "flex items-center gap-1.5 border px-2 py-1 text-[11px] font-medium transition-colors",
-                  copied
-                    ? "border-transparent bg-seq-accent text-seq-accent-foreground"
-                    : "border-border text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {copied ? (
-                  <>
-                    <Check className="size-3" aria-hidden />
-                    Copied
-                  </>
-                ) : (
-                  <>
-                    <Copy className="size-3" aria-hidden />
-                    Copy code
-                  </>
-                )}
-              </button>
-            </div>
-            <pre className="flex-1 overflow-auto p-3">
-              <code className="font-mono text-xs leading-relaxed text-foreground">
-                {trimmedChart}
-              </code>
-            </pre>
-          </div>
-        ) : null}
-        {showJourneyCode ? (
-          <div className="absolute inset-0 flex flex-col bg-card">
-            <div className="flex items-center justify-between border-b border-border px-3 py-2">
-              <span className="font-mono text-xs text-muted-foreground">
-                journey.mmd · {slides.length} steps · customize each step&apos;s chart, add{" "}
-                <code>%% tooltip: …</code> and <code>%% duration: ms</code> per edge
-              </span>
-              <button
-                type="button"
-                onClick={handleCopyJourneyCode}
-                className={cn(
-                  "flex shrink-0 items-center gap-1.5 border px-2 py-1 text-[11px] font-medium transition-colors",
-                  journeyCopied
-                    ? "border-transparent bg-seq-accent text-seq-accent-foreground"
-                    : "border-border text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {journeyCopied ? (
-                  <>
-                    <Check className="size-3" aria-hidden />
-                    Copied
-                  </>
-                ) : (
-                  <>
-                    <Copy className="size-3" aria-hidden />
-                    Copy all
-                  </>
-                )}
-              </button>
-            </div>
-            <pre className="flex-1 overflow-auto p-3">
-              <code className="font-mono text-xs leading-relaxed text-foreground">
-                {journeyCode}
-              </code>
-            </pre>
-          </div>
-        ) : null}
       </div>
 
       {hasCaptions ? (
