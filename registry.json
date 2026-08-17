@@ -7,54 +7,22 @@
       "name": "sequence-diagram",
       "type": "registry:component",
       "title": "Sequence Diagram",
-      "description": "A lightweight, read-only sequence diagram for React Flow, authored with Mermaid sequenceDiagram syntax. Supports activation bars, return messages, notes, self-messages, and grouping boxes.",
+      "description": "A lightweight sequence diagram and progressive journey player for React Flow, authored with Mermaid sequenceDiagram syntax or annotated journey Markdown.",
       "dependencies": ["@xyflow/react", "lucide-react"],
       "files": [
-        {
-          "path": "components/ui/sequence-diagram/types.ts",
-          "type": "registry:component",
-          "target": "components/ui/sequence-diagram/types.ts"
-        },
-        {
-          "path": "components/ui/sequence-diagram/parser.ts",
-          "type": "registry:component",
-          "target": "components/ui/sequence-diagram/parser.ts"
-        },
-        {
-          "path": "components/ui/sequence-diagram/layout.ts",
-          "type": "registry:component",
-          "target": "components/ui/sequence-diagram/layout.ts"
-        },
-        {
-          "path": "components/ui/sequence-diagram/context.tsx",
-          "type": "registry:component",
-          "target": "components/ui/sequence-diagram/context.tsx"
-        },
-        {
-          "path": "components/ui/sequence-diagram/nodes.tsx",
-          "type": "registry:component",
-          "target": "components/ui/sequence-diagram/nodes.tsx"
-        },
-        {
-          "path": "components/ui/sequence-diagram/edges.tsx",
-          "type": "registry:component",
-          "target": "components/ui/sequence-diagram/edges.tsx"
-        },
-        {
-          "path": "components/ui/sequence-diagram/sequence-diagram.tsx",
-          "type": "registry:component",
-          "target": "components/ui/sequence-diagram/sequence-diagram.tsx"
-        },
-        {
-          "path": "components/ui/sequence-diagram/index.ts",
-          "type": "registry:component",
-          "target": "components/ui/sequence-diagram/index.ts"
-        },
-        {
-          "path": "registry/skill/SKILL.md",
-          "type": "registry:file",
-          "target": "skills/sequence-diagram/SKILL.md"
-        }
+        { "path": "components/ui/sequence-diagram/types.ts", "type": "registry:component", "target": "components/ui/sequence-diagram/types.ts" },
+        { "path": "components/ui/sequence-diagram/parser.ts", "type": "registry:component", "target": "components/ui/sequence-diagram/parser.ts" },
+        { "path": "components/ui/sequence-diagram/layout.ts", "type": "registry:component", "target": "components/ui/sequence-diagram/layout.ts" },
+        { "path": "components/ui/sequence-diagram/context.tsx", "type": "registry:component", "target": "components/ui/sequence-diagram/context.tsx" },
+        { "path": "components/ui/sequence-diagram/nodes.tsx", "type": "registry:component", "target": "components/ui/sequence-diagram/nodes.tsx" },
+        { "path": "components/ui/sequence-diagram/edges.tsx", "type": "registry:component", "target": "components/ui/sequence-diagram/edges.tsx" },
+        { "path": "components/ui/sequence-diagram/tooltip.tsx", "type": "registry:component", "target": "components/ui/sequence-diagram/tooltip.tsx" },
+        { "path": "components/ui/sequence-diagram/sequence-diagram.css", "type": "registry:component", "target": "components/ui/sequence-diagram/sequence-diagram.css" },
+        { "path": "components/ui/sequence-diagram/sequence-diagram.tsx", "type": "registry:component", "target": "components/ui/sequence-diagram/sequence-diagram.tsx" },
+        { "path": "components/ui/sequence-diagram/journey-player.tsx", "type": "registry:component", "target": "components/ui/sequence-diagram/journey-player.tsx" },
+        { "path": "components/ui/sequence-diagram/journey-markdown.ts", "type": "registry:component", "target": "components/ui/sequence-diagram/journey-markdown.ts" },
+        { "path": "components/ui/sequence-diagram/index.ts", "type": "registry:component", "target": "components/ui/sequence-diagram/index.ts" },
+        { "path": "registry/skill/SKILL.md", "type": "registry:file", "target": "skills/sequence-diagram/SKILL.md" }
       ],
       "cssVars": {
         "light": {
@@ -80,16 +48,8 @@
       "description": "Example page showing the sequence diagram with a live Mermaid editor and multiple generic developer examples.",
       "registryDependencies": ["./sequence-diagram.json"],
       "files": [
-        {
-          "path": "components/demo/examples.ts",
-          "type": "registry:component",
-          "target": "components/sequence-diagram-demo/examples.ts"
-        },
-        {
-          "path": "components/demo/playground.tsx",
-          "type": "registry:component",
-          "target": "components/sequence-diagram-demo/playground.tsx"
-        }
+        { "path": "components/demo/examples.ts", "type": "registry:component", "target": "components/sequence-diagram-demo/examples.ts" },
+        { "path": "components/demo/playground.tsx", "type": "registry:component", "target": "components/sequence-diagram-demo/playground.tsx" }
       ]
     }
   ]
