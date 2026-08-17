@@ -35,6 +35,13 @@ export interface SeqMessage {
   deactivateSource: boolean
   /** Shown in a hover tooltip on the message label, and used as a JourneyPlayer step caption. Set via trailing `%% tooltip: text`. */
   explanation?: string
+  /**
+   * How long (ms) this step holds before the next one animates in, overriding
+   * the default stagger. Set via trailing `%% duration: <ms>` (combine with a
+   * tooltip using `%% tooltip: text | duration: 2000`). Useful for giving a
+   * dense or important step more time to read during JourneyPlayer playback.
+   */
+  durationMs?: number
 }
 
 export interface SeqNote {
@@ -45,6 +52,8 @@ export interface SeqNote {
   text: string
   /** Shown in a hover tooltip on the note, and used as a JourneyPlayer step caption. Set via trailing `%% tooltip: text`. */
   explanation?: string
+  /** How long (ms) this step holds before the next one animates in. Set via trailing `%% duration: <ms>`. See `SeqMessage.durationMs`. */
+  durationMs?: number
 }
 
 export interface SeqActivation {

@@ -33,20 +33,45 @@ const IGNORED_BLOCK_STARTS =
 // `box` container, matched by display label (case-insensitive, see below).
 // (Generic non-tooltip `%%` comments are simply discarded by extractTooltip.)
 const PARTICIPANT_TOOLTIP = /^tooltip\s+([^:]+):\s*(.+)$/i
-// Trailing `%% tooltip: <text>` on a message line annotates that message.
-const MESSAGE_TOOLTIP = /^tooltip\s*:\s*(.+)$/i
+// A single `key: value` directive on a message/note line, e.g. `tooltip:
+// <text>` or `duration: <ms>`. Multiple directives combine with `|`, e.g.
+// `%% tooltip: The browser asks for products | duration: 2000`.
+const STEP_DIRECTIVE = /^(tooltip|duration)\s*:\s*(.+?)\s*$/i
 
 /**
- * Strip a `%%` comment from a line. If the comment is a tooltip directive,
+ * Parse a message/note trailing comment body into its step directives.
+ * Supports `tooltip: <text>` (hover/caption explanation) and `duration:
+ * <ms>` (how long this step holds before the next one animates in),
+ * combinable with `|`.
+ */
+function parseStepDirectives(commentBody: string): { explanation?: string; durationMs?: number } {
+  const out: { explanation?: string; durationMs?: number } = {}
+  for (const part of commentBody.split("|")) {
+    const m = part.match(STEP_DIRECTIVE)
+    if (!m) continue
+    const key = m[1].toLowerCase()
+    if (key === "tooltip") {
+      out.explanation = m[2].trim()
+    } else {
+      const ms = Number.parseInt(m[2], 10)
+      if (Number.isFinite(ms) && ms > 0) out.durationMs = ms
+    }
+  }
+  return out
+}
+
+/**
+ * Strip a `%%` comment from a line. If the comment is a step directive,
  * extract it instead of discarding it: a standalone `%% tooltip Name: text`
  * line registers a participant or box explanation (and is fully consumed),
- * while a trailing `%% tooltip: text` on a content line yields an
- * explanation for whatever event that line defines.
+ * while a trailing `%% tooltip: text` and/or `%% duration: ms` on a content
+ * line (optionally combined with `|`) attach to whatever event that line
+ * defines.
  */
 function extractTooltip(
   rawLine: string,
   labelNotes: Map<string, string>,
-): { line: string; explanation?: string; consumed: boolean } {
+): { line: string; explanation?: string; durationMs?: number; consumed: boolean } {
   const i = rawLine.indexOf("%%")
   if (i === -1) return { line: rawLine.trim(), consumed: false }
   const before = rawLine.slice(0, i).trim()
@@ -57,9 +82,9 @@ function extractTooltip(
     if (!before) return { line: "", consumed: true }
     return { line: before, consumed: false }
   }
-  const messageMatch = commentBody.match(MESSAGE_TOOLTIP)
-  if (messageMatch) {
-    return { line: before, explanation: messageMatch[1].trim(), consumed: false }
+  const { explanation, durationMs } = parseStepDirectives(commentBody)
+  if (explanation !== undefined || durationMs !== undefined) {
+    return { line: before, explanation, durationMs, consumed: false }
   }
   return { line: before, consumed: false }
 }
@@ -111,6 +136,7 @@ export function parseSequenceDiagram(input: string): SeqModel {
     if (tip.consumed) continue
     const line = tip.line
     const messageExplanation = tip.explanation
+    const messageDurationMs = tip.durationMs
     if (!line) continue
 
     const lower = line.toLowerCase()
@@ -187,6 +213,7 @@ export function parseSequenceDiagram(input: string): SeqModel {
         participantIds: ids,
         text: noteMatch[3].trim(),
         explanation: messageExplanation,
+        durationMs: messageDurationMs,
       })
       continue
     }
@@ -240,6 +267,7 @@ export function parseSequenceDiagram(input: string): SeqModel {
         activateTarget,
         deactivateSource,
         explanation: messageExplanation,
+        durationMs: messageDurationMs,
       })
       continue
     }

@@ -1,11 +1,11 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Check, ChevronLeft, ChevronRight, Code2, Copy, Pause, Play } from "lucide-react"
+import { Check, ChevronLeft, ChevronRight, Code2, Copy, Layers, Pause, Play } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-import { getStepTiming } from "./layout"
+import { getStepSchedule } from "./layout"
 import { parseSequenceDiagram } from "./parser"
 import { SequenceDiagram } from "./sequence-diagram"
 import type { SequenceLayoutOptions } from "./types"
@@ -101,21 +101,33 @@ export function JourneyPlayer({
   const [captionIndex, setCaptionIndex] = useState(-1)
   const [showCode, setShowCode] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [showJourneyCode, setShowJourneyCode] = useState(false)
+  const [journeyCopied, setJourneyCopied] = useState(false)
   const slide = slides[index]
   const atStart = index === 0
   const atEnd = index === slides.length - 1
   const canPlay = slides.length > 1
 
-  // Number of steps (messages + notes, in the same order they're revealed)
-  // in the current slide's chart, and the timing the diagram itself uses to
-  // stagger them in — so the live caption below tracks the animation exactly
-  // without duplicating layout.ts's schedule.
-  const stepCount = useMemo(() => {
-    const model = parseSequenceDiagram(slide.chart)
-    return model.events.filter((e) => e.kind === "message" || e.kind === "note").length
-  }, [slide.chart])
-  const timing = useMemo(
-    () => getStepTiming(parseSequenceDiagram(slide.chart).participants.length, speed),
+  // The full journey as one editable source: every slide's Mermaid chart,
+  // in order, each labeled with its step number and title. This is the
+  // whole customizable journey at a glance — including any `%% tooltip:` /
+  // `%% duration:` annotations — not just the currently visible slide.
+  const journeyCode = useMemo(
+    () =>
+      slides
+        .map((s, i) => {
+          const heading = s.title ?? `Step ${i + 1}`
+          return `%% ==== ${heading} ====\n${s.chart.trim()}`
+        })
+        .join("\n\n"),
+    [slides],
+  )
+
+  // The exact same per-step entrance schedule the diagram itself animates
+  // to (including any `%% duration:` overrides on individual steps), so the
+  // live caption below tracks it exactly without duplicating layout.ts's logic.
+  const schedule = useMemo(
+    () => getStepSchedule(parseSequenceDiagram(slide.chart), speed),
     [slide.chart, speed],
   )
   // Prefer explicit `messageCaptions` when provided; otherwise read the
@@ -155,12 +167,16 @@ export function JourneyPlayer({
       setPlaying(false)
       return
     }
-    const dwell = dwellTimeFor(slides[index], speed, autoPlayIntervalMs)
+    // Never cut a slide short of its own step schedule — a `%% duration:`
+    // override on the last step should still get read in full during autoplay.
+    const scheduleFloor =
+      schedule.delays.length > 0 ? schedule.delays[schedule.delays.length - 1] + 1200 * speed : 0
+    const dwell = Math.max(dwellTimeFor(slides[index], speed, autoPlayIntervalMs), scheduleFloor)
     const id = setTimeout(() => {
       setIndex((i) => Math.min(slides.length - 1, i + 1))
     }, dwell)
     return () => clearTimeout(id)
-  }, [playing, index, slides, speed, autoPlayIntervalMs])
+  }, [playing, index, slides, speed, autoPlayIntervalMs, schedule])
 
   // Reveal each of this slide's captions in lockstep with its edge animating
   // in, so "the browser makes a request..." fades in right as that arrow
@@ -168,12 +184,12 @@ export function JourneyPlayer({
   useEffect(() => {
     setCaptionIndex(-1)
     if (!hasCaptions) return
-    const count = Math.min(captions.length, stepCount)
+    const count = Math.min(captions.length, schedule.delays.length)
     const timers = Array.from({ length: count }, (_, i) =>
-      setTimeout(() => setCaptionIndex(i), timing.actorSettleDelay + i * timing.stepStaggerMs),
+      setTimeout(() => setCaptionIndex(i), schedule.delays[i]),
     )
     return () => timers.forEach(clearTimeout)
-  }, [slide, captions, hasCaptions, stepCount, timing])
+  }, [slide, captions, hasCaptions, schedule])
 
   // Copied state and code visibility are per-slide; jumping to a new step
   // shouldn't leave a stale "Copied!" checkmark showing.
@@ -189,6 +205,26 @@ export function JourneyPlayer({
     } catch {
       // Clipboard API unavailable (e.g. insecure context) — fail silently.
     }
+  }
+
+  async function handleCopyJourneyCode() {
+    try {
+      await navigator.clipboard.writeText(journeyCode)
+      setJourneyCopied(true)
+      window.setTimeout(() => setJourneyCopied(false), 1600)
+    } catch {
+      // Clipboard API unavailable (e.g. insecure context) — fail silently.
+    }
+  }
+
+  function toggleShowCode() {
+    setShowJourneyCode(false)
+    setShowCode((v) => !v)
+  }
+
+  function toggleShowJourneyCode() {
+    setShowCode(false)
+    setShowJourneyCode((v) => !v)
   }
 
   function handleKeyDown(event: React.KeyboardEvent) {
@@ -301,21 +337,40 @@ export function JourneyPlayer({
               <ChevronRight className="size-4" aria-hidden />
             </button>
           </div>
-          <button
-            type="button"
-            aria-pressed={showCode}
-            aria-label={showCode ? "Hide diagram code" : "Show diagram code"}
-            onClick={() => setShowCode((v) => !v)}
-            className={cn(
-              "flex items-center gap-1.5 border px-2.5 py-1.5 text-xs font-medium transition-colors",
-              showCode
-                ? "border-transparent bg-primary text-primary-foreground"
-                : "border-border text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <Code2 className="size-3.5" aria-hidden />
-            Code
-          </button>
+          <div className="flex border border-border">
+            <button
+              type="button"
+              aria-pressed={showCode}
+              aria-label={showCode ? "Hide this slide's code" : "Show this slide's code"}
+              title="This slide's Mermaid code"
+              onClick={toggleShowCode}
+              className={cn(
+                "flex items-center gap-1.5 border-r border-border px-2.5 py-1.5 text-xs font-medium transition-colors",
+                showCode
+                  ? "border-transparent bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Code2 className="size-3.5" aria-hidden />
+              Slide
+            </button>
+            <button
+              type="button"
+              aria-pressed={showJourneyCode}
+              aria-label={showJourneyCode ? "Hide the full journey code" : "Show the full journey code"}
+              title="Every slide's Mermaid code, in order — the whole customizable journey"
+              onClick={toggleShowJourneyCode}
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium transition-colors",
+                showJourneyCode
+                  ? "border-transparent bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Layers className="size-3.5" aria-hidden />
+              Journey
+            </button>
+          </div>
         </div>
       </div>
 
@@ -362,6 +417,43 @@ export function JourneyPlayer({
             <pre className="flex-1 overflow-auto p-3">
               <code className="font-mono text-xs leading-relaxed text-foreground">
                 {trimmedChart}
+              </code>
+            </pre>
+          </div>
+        ) : null}
+        {showJourneyCode ? (
+          <div className="absolute inset-0 flex flex-col bg-card">
+            <div className="flex items-center justify-between border-b border-border px-3 py-2">
+              <span className="font-mono text-xs text-muted-foreground">
+                journey.mmd · {slides.length} steps · customize each step&apos;s chart, add{" "}
+                <code>%% tooltip: …</code> and <code>%% duration: ms</code> per edge
+              </span>
+              <button
+                type="button"
+                onClick={handleCopyJourneyCode}
+                className={cn(
+                  "flex shrink-0 items-center gap-1.5 border px-2 py-1 text-[11px] font-medium transition-colors",
+                  journeyCopied
+                    ? "border-transparent bg-seq-accent text-seq-accent-foreground"
+                    : "border-border text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {journeyCopied ? (
+                  <>
+                    <Check className="size-3" aria-hidden />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="size-3" aria-hidden />
+                    Copy all
+                  </>
+                )}
+              </button>
+            </div>
+            <pre className="flex-1 overflow-auto p-3">
+              <code className="font-mono text-xs leading-relaxed text-foreground">
+                {journeyCode}
               </code>
             </pre>
           </div>

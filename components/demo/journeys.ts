@@ -67,7 +67,7 @@ export const architectureJourney: JourneySlide[] = [
     participant D as Database
     B->>W: HTTP GET /products
     W->>C: GET products
-    C-->>W: Cache miss
+    C-->>W: Cache miss %% duration: 2600
     W->>D: SELECT * FROM products
     D-->>W: Rows
     W->>C: SET products
@@ -94,7 +94,7 @@ export const architectureJourney: JourneySlide[] = [
     end
     B->>W: HTTP GET /products
     W->>C: GET products
-    C-->>W: Cache hit
+    C-->>W: Cache hit %% duration: 3200
     W-->>B: 200 OK (HTML)
     `,
   },

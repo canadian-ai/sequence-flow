@@ -29,18 +29,39 @@ const BASE_TRAVEL_MS = 360
 const BASE_STEP_STAGGER_MS = BASE_TRAVEL_MS + 140
 const BASE_SETTLE_PAD_MS = 150
 
+export interface StepSchedule {
+  /** Delay (ms) before the actor boxes have finished settling in. */
+  actorSettleDelay: number
+  /**
+   * Absolute entrance delay (ms) for each message/note step, in
+   * chronological (top-to-bottom) order. `delays[i]` is when step `i`
+   * animates in; the gap to the next step defaults to the base stagger but
+   * stretches to honor that step's own `%% duration: <ms>` override, if set.
+   */
+  delays: number[]
+}
+
 /**
- * Timing for a chart's `animateIn` schedule: actors fade in first
+ * Compute a chart's `animateIn` schedule: actors fade in first
  * (`actorSettleDelay` covers all of them), then messages/notes reveal one at
- * a time every `stepStaggerMs`. JourneyPlayer imports this to build a
- * caption timeline that stays in lockstep with the diagram's own animation,
- * without duplicating these constants.
+ * a time, each holding for its own `durationMs` (or the default stagger)
+ * before the next one appears. Both `buildSequenceGraph` and JourneyPlayer
+ * call this on the same parsed model so the diagram's own entrance timing
+ * and the live caption stay in lockstep, including any per-step duration
+ * overrides from the chart's `%% duration:` annotations.
  */
-export function getStepTiming(participantCount: number, speed = 1) {
-  return {
-    actorSettleDelay: participantCount * BASE_ACTOR_STAGGER_MS * speed + BASE_SETTLE_PAD_MS * speed,
-    stepStaggerMs: BASE_STEP_STAGGER_MS * speed,
+export function getStepSchedule(model: SeqModel, speed = 1): StepSchedule {
+  const actorSettleDelay =
+    model.participants.length * BASE_ACTOR_STAGGER_MS * speed + BASE_SETTLE_PAD_MS * speed
+  const delays: number[] = []
+  let cursor = actorSettleDelay
+  for (const ev of model.events) {
+    if (ev.kind !== "message" && ev.kind !== "note") continue
+    delays.push(cursor)
+    const hold = ev.durationMs != null ? ev.durationMs * speed : BASE_STEP_STAGGER_MS * speed
+    cursor += hold
   }
+  return { actorSettleDelay, delays }
 }
 
 export interface SequenceGraph {
@@ -70,13 +91,11 @@ export function buildSequenceGraph(
   const enterDelayOf = (id: string) => (index.get(id) ?? 0) * STAGGER_MS
 
   // Messages and notes animate in one at a time, in chronological (top-to-bottom)
-  // order, once the actor boxes have finished settling in.
-  const { actorSettleDelay, stepStaggerMs: STEP_STAGGER_MS } = getStepTiming(
-    model.participants.length,
-    speed,
-  )
+  // order, once the actor boxes have finished settling in — each holding for
+  // its own `%% duration:` override (if set) before the next one appears.
+  const { delays: stepDelays } = getStepSchedule(model, speed)
   let stepIndex = 0
-  const nextStepDelay = () => actorSettleDelay + stepIndex++ * STEP_STAGGER_MS
+  const nextStepDelay = () => stepDelays[stepIndex++]
 
   const hasBoxes = model.boxes.length > 0
   const headY = MARGIN_TOP + (hasBoxes ? BOX_LABEL_H : 0)
