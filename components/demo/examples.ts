@@ -1,4 +1,4 @@
-export const girlChart = `sequenceDiagram
+export const requestLifecycleChart = `sequenceDiagram
     %% tooltip Browser: The client. Renders the page and initiates every request in this flow.
     participant B as Browser
     box Server Tier
@@ -35,7 +35,7 @@ export const pipelineChart = `sequenceDiagram
     Wk-->>-Q: Ack`
 
 export const examples = [
-  { id: "girl", label: "Request lifecycle", chart: girlChart },
+  { id: "request", label: "Request lifecycle", chart: requestLifecycleChart },
   { id: "auth", label: "Authentication", chart: authChart },
   { id: "pipeline", label: "Job pipeline", chart: pipelineChart },
 ] as const
