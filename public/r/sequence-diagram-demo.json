@@ -2,14 +2,14 @@
   "$schema": "https://ui.shadcn.com/schema/registry-item.json",
   "name": "sequence-diagram-demo",
   "title": "Sequence Diagram Demo",
-  "description": "Example page showing the sequence diagram with a live Mermaid editor and multiple sample diagrams.",
+  "description": "Example page showing the sequence diagram with a live Mermaid editor and generic developer examples.",
   "registryDependencies": [
     "./sequence-diagram.json"
   ],
   "files": [
     {
       "path": "components/demo/examples.ts",
-      "content": "export const girlChart = `sequenceDiagram\n    participant B as Browser\n    box Server Tier\n    participant W as Web Server\n    participant D as Database Server\n    end\n    B->>W: HTTP GET Request\n    W->>+D: SQL Command\n    Note over D: Query planner\n    D-->>-W: Result Set\n    W-->>B: HTTP Response`\n\nexport const authChart = `sequenceDiagram\n    actor U as User\n    participant A as App\n    participant Auth as Auth Service\n    U->>A: Submit credentials\n    A->>+Auth: Verify(email, password)\n    Auth->>Auth: Hash + compare\n    Auth-->>-A: Session token\n    A-->>U: Redirect to dashboard`\n\nexport const pipelineChart = `sequenceDiagram\n    participant C as Client\n    participant Q as Queue\n    participant Wk as Worker\n    C->>Q: Enqueue job\n    Note right of Q: Buffered\n    Q->>+Wk: Dispatch\n    Wk->>Wk: Process batch\n    Wk-->>-Q: Ack`\n\nexport const examples = [\n  { id: \"girl\", label: \"Request lifecycle\", chart: girlChart },\n  { id: \"auth\", label: \"Authentication\", chart: authChart },\n  { id: \"pipeline\", label: \"Job pipeline\", chart: pipelineChart },\n] as const\n",
+      "content": "export const requestLifecycleChart = `sequenceDiagram\n    participant B as Browser\n    box Server Tier\n    participant W as Web Server\n    participant D as Database Server\n    end\n    B->>W: HTTP GET Request\n    W->>+D: SQL Command\n    Note over D: Query planner\n    D-->>-W: Result Set\n    W-->>B: HTTP Response`\n\nexport const authChart = `sequenceDiagram\n    actor U as User\n    participant A as App\n    participant Auth as Auth Service\n    U->>A: Submit credentials\n    A->>+Auth: Verify(email, password)\n    Auth->>Auth: Hash + compare\n    Auth-->>-A: Session token\n    A-->>U: Redirect to dashboard`\n\nexport const pipelineChart = `sequenceDiagram\n    participant C as Client\n    participant Q as Queue\n    participant Wk as Worker\n    C->>Q: Enqueue job\n    Note right of Q: Buffered\n    Q->>+Wk: Dispatch\n    Wk->>Wk: Process batch\n    Wk-->>-Q: Ack`\n\nexport const examples = [\n  { id: \"request\", label: \"Request lifecycle\", chart: requestLifecycleChart },\n  { id: \"auth\", label: \"Authentication\", chart: authChart },\n  { id: \"pipeline\", label: \"Job pipeline\", chart: pipelineChart },\n] as const\n",
       "type": "registry:component",
       "target": "components/sequence-diagram-demo/examples.ts"
     },
