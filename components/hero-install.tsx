@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Check, Copy, Download, FileCode2, Github, Terminal } from "lucide-react"
+import { Check, Copy, Download, FileCode2, Terminal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -144,7 +144,7 @@ export function HeroInstall() {
 
         {mode === "component" ? (
           <div className="flex items-center gap-2 border-t border-border bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground sm:px-4">
-            <Github className="size-3.5 shrink-0" aria-hidden />
+            <FileCode2 className="size-3.5 shrink-0" aria-hidden />
             <span>
               Installs directly from the public GitHub source registry. The hosted <code>/r/*.json</code> endpoint remains available for compatibility.
             </span>
