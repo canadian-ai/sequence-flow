@@ -18,6 +18,22 @@ type TabId = (typeof tabs)[number]["id"]
 
 const initialJourney = JSON.stringify(architectureJourney, null, 2)
 
+const sequenceCode = `import { SequenceDiagram } from "@/components/ui/sequence-diagram"
+
+const chart = \`sequenceDiagram
+  participant B as Browser
+  participant A as API
+  B->>A: GET /products
+  A-->>B: 200 OK\`
+
+export function SequenceExample() {
+  return (
+    <div className="h-[400px]">
+      <SequenceDiagram chart={chart} />
+    </div>
+  )
+}`
+
 function buildJourneyCode(slides: JourneySlide[]) {
   return `import { JourneyPlayer, type JourneySlide } from "@/components/ui/sequence-diagram"\n\nconst journey: JourneySlide[] = ${JSON.stringify(
     slides,
@@ -36,19 +52,19 @@ function CodeBlock({ code }: { code: string }) {
   }
 
   return (
-    <div className="overflow-hidden border border-border bg-card">
+    <div className="min-w-0 overflow-hidden border border-border bg-card">
       <div className="flex items-center justify-between gap-3 border-b border-border px-3 py-2">
         <span className="font-mono text-xs text-muted-foreground">component.tsx</span>
         <button
           type="button"
           onClick={copy}
-          className="inline-flex min-h-9 items-center gap-2 border border-border px-3 text-xs font-medium transition-colors hover:bg-secondary"
+          className="inline-flex min-h-9 shrink-0 items-center gap-2 border border-border px-3 text-xs font-medium transition-colors hover:bg-secondary"
         >
           {copied ? <Check className="size-3.5" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
           {copied ? "Copied" : "Copy code"}
         </button>
       </div>
-      <pre className="max-h-[420px] overflow-auto p-4 text-xs leading-relaxed">
+      <pre className="max-h-[420px] max-w-full overflow-auto p-4 text-xs leading-relaxed">
         <code>{code}</code>
       </pre>
     </div>
@@ -96,7 +112,7 @@ function JourneyEditor() {
       </div>
 
       <div className="min-w-0 space-y-4">
-        <div className="overflow-hidden border border-border bg-card p-2 sm:p-3">
+        <div className="min-w-0 overflow-hidden border border-border bg-card p-2 sm:p-3">
           <JourneyPlayer slides={parsed.slides} height={460} />
         </div>
         <CodeBlock code={buildJourneyCode(parsed.slides)} />
@@ -135,7 +151,14 @@ export function EditorWorkbench() {
       </div>
 
       <div role="tabpanel" className="min-w-0">
-        {tab === "sequence" ? <Playground /> : <JourneyEditor />}
+        {tab === "sequence" ? (
+          <div className="min-w-0 space-y-4">
+            <Playground />
+            <CodeBlock code={sequenceCode} />
+          </div>
+        ) : (
+          <JourneyEditor />
+        )}
       </div>
     </div>
   )
