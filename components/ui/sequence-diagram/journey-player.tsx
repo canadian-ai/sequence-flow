@@ -277,18 +277,19 @@ export function JourneyPlayer({
       {hasCaptions ? (
         <div
           key={`${slide.id}-live-caption`}
+          data-journey-live-caption
           aria-live="polite"
-          className="flex min-h-10 items-center border border-border bg-muted px-3 py-2"
+          className="flex min-h-10 items-center border border-border bg-card px-3 py-2 text-card-foreground"
         >
           {captionIndex >= 0 && captions[captionIndex] ? (
-            <p key={captionIndex} className="seq-enter text-sm leading-relaxed text-foreground">
+            <p key={captionIndex} className="seq-enter text-sm leading-relaxed text-inherit">
               <span className="mr-2 text-xs font-medium tabular-nums text-seq-accent">
                 {captionIndex + 1}/{captions.length}
               </span>
               {captions[captionIndex]}
             </p>
           ) : (
-            <p className="text-sm text-muted-foreground">Watch the diagram to follow along…</p>
+            <p className="text-sm text-inherit opacity-70">Watch the diagram to follow along…</p>
           )}
         </div>
       ) : null}
@@ -296,7 +297,7 @@ export function JourneyPlayer({
       {slide.caption ? (
         <p
           key={slide.id}
-          className="seq-enter border-t border-border pt-3 text-sm leading-relaxed text-muted-foreground"
+          className="seq-enter border-t border-border pt-3 text-sm leading-relaxed text-foreground/70"
         >
           {slide.caption}
         </p>
