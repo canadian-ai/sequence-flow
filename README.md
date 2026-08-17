@@ -32,7 +32,7 @@ export function Example() {
 }
 ```
 
-## Pass a journey
+## Pass a journey as JSON / TypeScript
 
 A journey is an array of `JourneySlide` objects. Each slide owns a standalone Mermaid sequence diagram plus optional title, caption, and per-message commentary.
 
@@ -69,41 +69,102 @@ export function JourneyExample() {
 }
 ```
 
-You can also provide `messageCaptions` on each slide when you want narration to appear as individual messages reveal:
+You can also provide `messageCaptions` on each slide when you want narration to appear as individual messages reveal.
 
-```tsx
-const journey: JourneySlide[] = [
-  {
-    id: "cache",
-    title: "Adding a cache",
-    chart: `sequenceDiagram
-      participant W as Web Server
-      participant C as Cache
-      W->>C: GET products
-      C-->>W: Cache hit`,
-    messageCaptions: [
-      "The web server checks the cache first.",
-      "The cache returns the stored result without touching the database.",
-    ],
-  },
-]
+## Write a journey in Markdown
+
+`parseJourneyMarkdown` lets you author the same `JourneySlide[]` model in a readable Markdown document. Each `##` heading becomes a slide, ordinary Markdown becomes the slide caption, and a fenced `mermaid` block contains the diagram.
+
+```md
+# Request lifecycle
+
+A progressive walkthrough for the request path.
+
+## Step 1 — Request
+<!-- @id: request -->
+<!-- @message: The browser sends the request to the API. -->
+The browser begins the request lifecycle.
+
+```mermaid
+sequenceDiagram
+  participant B as Browser
+  participant A as API
+  B->>A: GET /products
 ```
 
-If `messageCaptions` is omitted, JourneyPlayer can reuse `%% tooltip:` annotations from the Mermaid source as step commentary.
+## Step 2 — Response
+<!-- @id: response -->
+<!-- @message: The browser sends the request to the API. -->
+<!-- @message: The API returns the product payload. -->
+The response completes the round trip.
+
+```mermaid
+sequenceDiagram
+  participant B as Browser
+  participant A as API
+  B->>A: GET /products
+  A-->>B: 200 OK
+```
+```
+
+Then compile and render it:
+
+```tsx
+import {
+  JourneyPlayer,
+  parseJourneyMarkdown,
+} from "@/components/ui/sequence-diagram"
+
+const markdown = `...`
+const journey = parseJourneyMarkdown(markdown)
+
+export function JourneyExample() {
+  return <JourneyPlayer slides={journey.slides} />
+}
+```
+
+Supported Markdown annotations:
+
+- `<!-- @id: stable-id -->` sets the slide ID.
+- Repeated `<!-- @message: narration -->` annotations populate `messageCaptions` in reveal order.
+- `<!-- @caption: narration -->` is accepted as an alias for `@message`.
+- A top-level `#` heading is returned as the document title.
+- Text before the first slide is returned as the document description.
+
+If `messageCaptions` is omitted, `JourneyPlayer` can still reuse `%% tooltip:` annotations inside Mermaid as step commentary.
 
 ## Live editor
 
 The demo site includes two mobile-responsive editor tabs:
 
 - **Sequence flow** — edit Mermaid sequence syntax, preview the canvas, tune the theme, and export the diagram.
-- **Journey** — edit a complete `JourneySlide[]`, preview the progressive walkthrough, and copy the full React usage.
+- **Journey** — switch between **Markdown** and **JSON**, preview the progressive walkthrough, choose a live theme, and copy the full React usage.
 
 The code views are designed for full copy-and-paste usage so the rendered example and the integration snippet stay next to each other.
+
+## Test suite
+
+The repository includes regression coverage for the public component surface:
+
+- sequence parser behavior and Mermaid annotations
+- journey Markdown parsing and validation
+- layout graph generation and reveal scheduling
+- shadcn registry completeness for the Journey runtime
+- browser smoke coverage for the Journey editor and theme controls
+
+Run the unit/integration suite with:
+
+```bash
+pnpm test
+```
+
+The GitHub Actions workflow also runs tests, lint, and a production Next.js build for every pull request.
 
 ## What this repo is
 
 - A reusable React component for technical diagrams.
 - A progressive journey player for multi-step technical walkthroughs.
+- A Markdown-to-`JourneySlide[]` compiler for annotated journey documents.
 - A small Mermaid-compatible parser and layout layer for sequence diagrams.
 - A shadcn registry package developers can copy directly into their applications.
 - A demo playground for testing diagrams, journeys, and the component API.
