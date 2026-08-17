@@ -26,10 +26,9 @@ B-->>A: Two`)
     const shortHold = shortSchedule.delays[1] - shortSchedule.delays[0]
     const longHold = longSchedule.delays[1] - longSchedule.delays[0]
 
-    // Even a one-word label gets enough time to orient and read.
-    expect(shortHold).toBeGreaterThanOrEqual(1600)
-    // Longer technical labels receive proportionally more reading time.
-    expect(longHold).toBeGreaterThan(shortHold)
+    expect(shortHold).toBe(1600)
+    // Six words at 160 WPM = 2250 ms, plus the 600 ms orientation beat.
+    expect(longHold).toBe(2850)
   })
 
   it("uses a slower packet travel duration so the edge motion is trackable", () => {
