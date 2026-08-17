@@ -21,7 +21,12 @@ export interface HandleSpec {
 
 /** Base (speed = 1) entrance-animation timing constants, shared with JourneyPlayer. */
 const BASE_ACTOR_STAGGER_MS = 70
-const BASE_STEP_STAGGER_MS = 180
+/** How long the traveling dot takes to fly from source to target along an edge. */
+const BASE_TRAVEL_MS = 360
+// Give each message's dot time to land (BASE_TRAVEL_MS) plus a short beat
+// before the next one launches, so packets arrive one at a time instead of
+// overlapping mid-flight.
+const BASE_STEP_STAGGER_MS = BASE_TRAVEL_MS + 140
 const BASE_SETTLE_PAD_MS = 150
 
 /**
@@ -162,6 +167,7 @@ export function buildSequenceGraph(
           explanation: ev.explanation,
           animateIn,
           enterDelay: nextStepDelay(),
+          travelMs: BASE_TRAVEL_MS * speed,
         },
       })
     } else if (ev.kind === "note") {

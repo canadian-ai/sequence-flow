@@ -33,14 +33,19 @@
 }
 
 /**
- * Message edge entrance: the line fades in, timed to each message's
- * chronological `enterDelay` (see layout.ts `nextStepDelay`) so messages
- * appear one at a time like a step-through playback rather than all at once.
- * A plain fade (rather than a dash-offset "draw" wipe) keeps this compatible
- * with dashed return-message strokes, which already set their own
- * `stroke-dasharray`.
+ * Message edge entrance, in two parts, timed to each message's chronological
+ * `enterDelay` (see layout.ts `nextStepDelay`) so messages appear one at a
+ * time like a step-through playback rather than all at once:
+ *
+ * 1. `seq-edge-pop` snaps the line/label to fully visible the instant the
+ *    message's turn arrives — no fade, so it never reads as sluggish.
+ * 2. `seq-edge-dot` flies a small semicircle "packet" along that same path
+ *    (via `offset-path`, set inline per-edge in edges.tsx since each path is
+ *    unique) from source to target, arriving right as the line pops in.
+ *    This is the primary motion cue — it makes the arrival feel immediate
+ *    rather than the previous plain opacity fade.
  */
-@keyframes seq-edge-enter {
+@keyframes seq-edge-pop {
   from {
     opacity: 0;
   }
@@ -49,14 +54,40 @@
   }
 }
 
-.seq-edge-enter {
-  animation: seq-edge-enter 220ms ease-out both;
+.seq-edge-pop {
+  animation: seq-edge-pop 1ms both;
+}
+
+@keyframes seq-edge-travel {
+  0% {
+    offset-distance: 0%;
+    opacity: 1;
+  }
+  80% {
+    offset-distance: 80%;
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
+
+.seq-edge-dot {
+  offset-distance: 0%;
+  animation-name: seq-edge-travel;
+  animation-timing-function: ease-in;
+  animation-fill-mode: both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .seq-enter,
-  .seq-edge-enter {
+  .seq-edge-pop {
     animation-duration: 1ms;
     animation-delay: 0ms !important;
+  }
+  .seq-edge-dot {
+    animation: none;
+    opacity: 0;
   }
 }

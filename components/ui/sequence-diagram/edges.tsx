@@ -25,6 +25,8 @@ interface MessageData {
   explanation?: string
   animateIn?: boolean
   enterDelay?: number
+  /** Duration (ms) for the traveling dot to fly from source to target. */
+  travelMs?: number
 }
 
 export function SeqMessageEdge({
@@ -59,6 +61,10 @@ export function SeqMessageEdge({
   const onEnter = () => setHover(id, [d.from, d.to])
   const onLeave = () => setHover(null, [])
   const enterDelay = d.animateIn ? `${d.enterDelay ?? 0}ms` : undefined
+  const travelMs = d.travelMs ?? 360
+  // The label reveals once the traveling dot lands, so it reads as the
+  // message "arriving" rather than appearing alongside the line's own pop-in.
+  const labelDelay = d.animateIn ? `${(d.enterDelay ?? 0) + travelMs}ms` : undefined
 
   return (
     <>
@@ -67,7 +73,7 @@ export function SeqMessageEdge({
         path={path}
         markerEnd={MARKER[d.head]}
         interactionWidth={22}
-        className={d.animateIn ? "seq-edge-enter" : undefined}
+        className={d.animateIn ? "seq-edge-pop" : undefined}
         style={{
           stroke: "var(--seq-accent)",
           strokeWidth: hovered ? 2.5 : 1.5,
@@ -77,6 +83,23 @@ export function SeqMessageEdge({
           animationDelay: enterDelay,
         }}
       />
+      {d.animateIn ? (
+        // Traveling "packet" that flies from source to target along the
+        // message's own path the instant it appears — reads as motion
+        // in-flight rather than a plain (and, per feedback, sluggish-feeling)
+        // fade. Its arrival is what visually completes the edge.
+        <path
+          className="seq-edge-dot"
+          d="M -5 0 A 5 5 0 0 1 5 0 Z"
+          fill="var(--seq-accent)"
+          style={{
+            offsetPath: `path("${path}")`,
+            offsetRotate: "auto",
+            animationDuration: `${travelMs}ms`,
+            animationDelay: enterDelay,
+          }}
+        />
+      ) : null}
       <EdgeLabelRenderer>
         {d.text ? (
           <div
@@ -88,7 +111,7 @@ export function SeqMessageEdge({
               left: labelX,
               top: labelY,
               opacity: dimmed ? 0.4 : 1,
-              animationDelay: enterDelay,
+              animationDelay: labelDelay,
             }}
             onMouseEnter={onEnter}
             onMouseLeave={onLeave}
