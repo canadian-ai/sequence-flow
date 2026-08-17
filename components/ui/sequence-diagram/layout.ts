@@ -19,6 +19,25 @@ export interface HandleSpec {
   top: number
 }
 
+/** Base (speed = 1) entrance-animation timing constants, shared with JourneyPlayer. */
+const BASE_ACTOR_STAGGER_MS = 70
+const BASE_STEP_STAGGER_MS = 180
+const BASE_SETTLE_PAD_MS = 150
+
+/**
+ * Timing for a chart's `animateIn` schedule: actors fade in first
+ * (`actorSettleDelay` covers all of them), then messages/notes reveal one at
+ * a time every `stepStaggerMs`. JourneyPlayer imports this to build a
+ * caption timeline that stays in lockstep with the diagram's own animation,
+ * without duplicating these constants.
+ */
+export function getStepTiming(participantCount: number, speed = 1) {
+  return {
+    actorSettleDelay: participantCount * BASE_ACTOR_STAGGER_MS * speed + BASE_SETTLE_PAD_MS * speed,
+    stepStaggerMs: BASE_STEP_STAGGER_MS * speed,
+  }
+}
+
 export interface SequenceGraph {
   nodes: Node[]
   edges: Edge[]
@@ -35,7 +54,8 @@ export function buildSequenceGraph(
   const MSG_GAP = options.messageGap ?? 56
   const showBottom = options.showBottomActors ?? true
   const animateIn = options.animateIn ?? false
-  const STAGGER_MS = 70
+  const speed = options.speed ?? 1
+  const STAGGER_MS = BASE_ACTOR_STAGGER_MS * speed
 
   const index = new Map<string, number>()
   model.participants.forEach((p, i) => index.set(p.id, i))
@@ -46,8 +66,10 @@ export function buildSequenceGraph(
 
   // Messages and notes animate in one at a time, in chronological (top-to-bottom)
   // order, once the actor boxes have finished settling in.
-  const STEP_STAGGER_MS = 180
-  const actorSettleDelay = model.participants.length * STAGGER_MS + 150
+  const { actorSettleDelay, stepStaggerMs: STEP_STAGGER_MS } = getStepTiming(
+    model.participants.length,
+    speed,
+  )
   let stepIndex = 0
   const nextStepDelay = () => actorSettleDelay + stepIndex++ * STEP_STAGGER_MS
 

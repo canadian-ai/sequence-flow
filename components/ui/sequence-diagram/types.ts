@@ -72,4 +72,10 @@ export interface SequenceLayoutOptions {
    * left-to-right by column. Off by default; used by JourneyPlayer slides.
    */
   animateIn?: boolean
+  /**
+   * Multiplier applied to every `animateIn` delay/duration. 1 is normal
+   * pace, >1 slows the reveal down (more time to read each step), <1
+   * speeds it up. Only has an effect when `animateIn` is set.
+   */
+  speed?: number
 }

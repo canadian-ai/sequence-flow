@@ -107,6 +107,7 @@ const SequenceDiagramInner = forwardRef<SequenceDiagramHandle, SequenceDiagramPr
       messageGap,
       showBottomActors,
       animateIn,
+      speed,
     },
     ref,
   ) {
@@ -121,8 +122,14 @@ const SequenceDiagramInner = forwardRef<SequenceDiagramHandle, SequenceDiagramPr
 
   const { nodes, edges } = useMemo(() => {
     const model = parseSequenceDiagram(chart)
-    return buildSequenceGraph(model, { columnGap, messageGap, showBottomActors, animateIn })
-  }, [chart, columnGap, messageGap, showBottomActors, animateIn])
+    return buildSequenceGraph(model, {
+      columnGap,
+      messageGap,
+      showBottomActors,
+      animateIn,
+      speed,
+    })
+  }, [chart, columnGap, messageGap, showBottomActors, animateIn, speed])
 
   useImperativeHandle(
     ref,
