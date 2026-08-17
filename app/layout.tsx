@@ -7,26 +7,12 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' })
 
 export const metadata: Metadata = {
-  title: 'Sequence Diagram — React Flow',
+  title: 'Sequence Flow — React sequence diagrams',
   description:
-    'A lightweight, read-only sequence diagram component for React Flow, authored with Mermaid syntax. Distributed on the shadcn registry.',
-  generator: 'v0.app',
+    'An open-source developer primitive from Canadian AI for rendering Mermaid sequenceDiagram syntax as an interactive React Flow canvas.',
+  generator: 'Next.js',
   icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
+    icon: '/icon-black.svg',
   },
 }
 
