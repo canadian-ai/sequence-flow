@@ -8,7 +8,7 @@
       "type": "registry:component",
       "title": "Sequence Diagram",
       "description": "A lightweight sequence diagram and progressive journey player for React Flow, authored with Mermaid sequenceDiagram syntax or annotated journey Markdown.",
-      "dependencies": ["@xyflow/react", "lucide-react"],
+      "dependencies": ["@xyflow/react", "html-to-image", "lucide-react"],
       "files": [
         { "path": "components/ui/sequence-diagram/types.ts", "type": "registry:component", "target": "components/ui/sequence-diagram/types.ts" },
         { "path": "components/ui/sequence-diagram/parser.ts", "type": "registry:component", "target": "components/ui/sequence-diagram/parser.ts" },
