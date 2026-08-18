@@ -22,6 +22,15 @@ function contrastRatio(foreground: string, background: string) {
   return (lighter + 0.05) / (darker + 0.05)
 }
 
+test("landing page gives external developers a self-contained quick start", async ({ page }) => {
+  await page.goto("/")
+
+  await expect(page.getByRole("heading", { name: "60-second quick start" })).toBeVisible()
+  await expect(page.getByText("No account, backend, or hosted runtime is required.")).toBeVisible()
+  await expect(page.getByText('import { SequenceDiagram } from "@/components/ui/sequence-diagram"')).toBeVisible()
+  await expect(page.getByRole("link", { name: "Try the live editor" })).toHaveAttribute("href", "#live-editor")
+})
+
 test("journey editor supports markdown, json, and live themes", async ({ page }) => {
   await page.goto("/")
   await page.getByRole("tab", { name: "Journey" }).click()
