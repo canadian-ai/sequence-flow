@@ -6,11 +6,31 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' })
 
+const siteUrl = 'https://sequence-flow.canadian-ai.app'
+const title = 'Sequence Flow — React sequence diagrams and journeys'
+const description =
+  'Installable React Flow sequence diagrams and progressive architecture journeys, authored with Mermaid or Markdown and distributed through shadcn.'
+
 export const metadata: Metadata = {
-  title: 'Sequence Flow — React sequence diagrams',
-  description:
-    'An open-source developer primitive from Canadian AI for rendering Mermaid sequenceDiagram syntax as an interactive React Flow canvas.',
+  metadataBase: new URL(siteUrl),
+  title,
+  description,
   generator: 'Next.js',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    url: '/',
+    siteName: 'Sequence Flow',
+    title,
+    description,
+  },
+  twitter: {
+    card: 'summary',
+    title,
+    description,
+  },
   icons: {
     icon: '/icon-black.svg',
   },
