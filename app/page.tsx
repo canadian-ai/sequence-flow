@@ -6,6 +6,22 @@ import { requestLifecycleChart } from "@/components/demo/examples"
 import { HeroInstall } from "@/components/hero-install"
 import { SequenceDiagram } from "@/components/ui/sequence-diagram"
 
+const quickStartCode = `import { SequenceDiagram } from "@/components/ui/sequence-diagram"
+
+const chart = \`sequenceDiagram
+  participant B as Browser
+  participant A as API
+  B->>A: GET /products
+  A-->>B: 200 OK\`
+
+export function RequestFlow() {
+  return (
+    <div className="h-[360px]">
+      <SequenceDiagram chart={chart} />
+    </div>
+  )
+}`
+
 const features = [
   {
     title: "Mermaid syntax",
@@ -80,7 +96,54 @@ export default function Page() {
         <HeroInstall />
       </header>
 
-      <section className="min-w-0 flex flex-col gap-4">
+      <section aria-labelledby="quick-start" className="min-w-0 space-y-5">
+        <div className="flex flex-col gap-2">
+          <h2 id="quick-start" className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            60-second quick start
+          </h2>
+          <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            Install once, paste a diagram, and render it inside a height-constrained container. No account, backend, or hosted runtime is required.
+          </p>
+        </div>
+
+        <div className="grid overflow-hidden border border-border bg-border lg:grid-cols-[220px_1fr]">
+          <ol className="grid gap-px bg-border sm:grid-cols-3 lg:grid-cols-1">
+            {[
+              ["1", "Install", "Add the component from the public shadcn registry."],
+              ["2", "Paste", "Use familiar Mermaid sequenceDiagram syntax."],
+              ["3", "Render", "Give the wrapper a height and ship it."],
+            ].map(([step, title, body]) => (
+              <li key={step} className="bg-card p-4">
+                <div className="mb-2 font-mono text-xs text-muted-foreground">{step.padStart(2, "0")}</div>
+                <h3 className="text-sm font-medium text-foreground">{title}</h3>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{body}</p>
+              </li>
+            ))}
+          </ol>
+          <div className="min-w-0 bg-card">
+            <div className="border-b border-border px-4 py-2 font-mono text-xs text-muted-foreground">
+              request-flow.tsx
+            </div>
+            <pre className="max-w-full overflow-x-auto p-4 text-xs leading-relaxed sm:p-5">
+              <code>{quickStartCode}</code>
+            </pre>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3 text-sm">
+          <a href="#live-editor" className="font-medium text-foreground underline underline-offset-4">
+            Try the live editor
+          </a>
+          <Link
+            href="https://github.com/canadian-ai/sequence-flow#write-a-journey-in-markdown"
+            className="font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
+            Build a progressive journey
+          </Link>
+        </div>
+      </section>
+
+      <section id="live-editor" className="min-w-0 scroll-mt-6 flex flex-col gap-4">
         <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between sm:gap-2">
           <h2 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
             Live editor
