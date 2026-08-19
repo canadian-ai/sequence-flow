@@ -25,10 +25,11 @@ function contrastRatio(foreground: string, background: string) {
 test("landing page gives external developers a self-contained quick start", async ({ page }) => {
   await page.goto("/")
 
-  await expect(page.getByRole("heading", { name: "60-second quick start" })).toBeVisible()
-  await expect(page.getByText("No account, backend, or hosted runtime is required.")).toBeVisible()
-  await expect(page.getByText('import { SequenceDiagram } from "@/components/ui/sequence-diagram"')).toBeVisible()
-  await expect(page.getByRole("link", { name: "Try the live editor" })).toHaveAttribute("href", "#live-editor")
+  const quickStart = page.locator('section[aria-labelledby="quick-start"]')
+  await expect(quickStart.getByRole("heading", { name: "60-second quick start" })).toBeVisible()
+  await expect(quickStart.getByText("No account, backend, or hosted runtime is required.")).toBeVisible()
+  await expect(quickStart.locator("pre")).toContainText('import { SequenceDiagram } from "@/components/ui/sequence-diagram"')
+  await expect(quickStart.getByRole("link", { name: "Try the live editor" })).toHaveAttribute("href", "#live-editor")
 })
 
 test("journey editor supports markdown, json, and live themes", async ({ page }) => {
