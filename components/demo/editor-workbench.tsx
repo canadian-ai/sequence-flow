@@ -1,10 +1,11 @@
 "use client"
 
 import { type CSSProperties, useMemo, useState } from "react"
-import { Check, Copy, Moon, Sun } from "lucide-react"
+import { Check, Copy, Download, Moon, Sun } from "lucide-react"
 
 import {
   JourneyPlayer,
+  downloadJourneyHtml,
   parseJourneyMarkdown,
   type JourneySlide,
 } from "@/components/ui/sequence-diagram"
@@ -209,6 +210,7 @@ function JourneyEditor() {
     </div>
     <div className="min-w-0 space-y-4">
       <JourneyThemePicker themeId={themeId} mode={mode} onThemeChange={setThemeId} onModeChange={setMode} />
+      <div className="flex justify-end"><button type="button" onClick={() => downloadJourneyHtml(parsed.slides, { title: "sequence-flow-journey", theme: mode })} className="inline-flex min-h-10 items-center gap-2 border border-border bg-card px-3 text-xs font-medium hover:bg-secondary"><Download className="size-4" aria-hidden />Export self-contained HTML</button></div>
       <div style={journeyStyle} className="min-w-0 overflow-hidden border border-border bg-background p-2 sm:p-3"><JourneyPlayer slides={parsed.slides} height={460} /></div>
       <CodeBlock code={buildJourneyCode(parsed.slides, themeId, mode)} />
     </div>
@@ -216,7 +218,7 @@ function JourneyEditor() {
 }
 
 export function EditorWorkbench() {
-  const [tab, setTab] = useState<TabId>("sequence")
+  const [tab, setTab] = useState<TabId>("journey")
   return <div className="min-w-0 space-y-4">
     <div role="tablist" aria-label="Editor type" className="grid w-full grid-cols-2 border border-border sm:flex sm:w-fit">{tabs.map((item) => <button key={item.id} type="button" role="tab" aria-selected={tab === item.id} onClick={() => setTab(item.id)} className={cn("min-h-11 px-4 text-sm font-medium sm:min-w-36", tab === item.id ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground")}>{item.label}</button>)}</div>
     <div role="tabpanel" className="min-w-0">{tab === "sequence" ? <div className="min-w-0 space-y-4"><Playground /><CodeBlock code={sequenceCode} /></div> : <JourneyEditor />}</div>

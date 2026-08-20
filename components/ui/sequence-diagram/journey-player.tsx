@@ -40,6 +40,12 @@ export interface JourneyPlayerProps extends Omit<SequenceLayoutOptions, "animate
   height?: number
   /** Fixed dwell time per slide during autoplay. */
   autoPlayIntervalMs?: number
+  /** Begin playback automatically. Defaults to true. */
+  autoPlay?: boolean
+  /** Restart after the final step. Defaults to true. */
+  loop?: boolean
+  /** Called when the final step finishes. */
+  onComplete?: () => void
 }
 
 const MIN_DWELL_MS = 2600
@@ -71,11 +77,16 @@ export function JourneyPlayer({
   messageGap,
   showBottomActors,
   autoPlayIntervalMs,
+  autoPlay = true,
+  loop = true,
+  onComplete,
   speed = 1,
 }: JourneyPlayerProps) {
+  const [prefersReducedMotion] = useState(() => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
   const [index, setIndex] = useState(0)
-  const [playing, setPlaying] = useState(false)
-  const [looping, setLooping] = useState(false)
+  const [playing, setPlaying] = useState(autoPlay && !prefersReducedMotion)
+  const [looping, setLooping] = useState(loop)
+  const [inspecting, setInspecting] = useState(false)
   const [captionIndex, setCaptionIndex] = useState(-1)
   const [copied, setCopied] = useState(false)
 
@@ -122,24 +133,30 @@ export function JourneyPlayer({
   }
 
   useEffect(() => {
-    if (!playing || !slide) return
+    setIndex(0)
+    setPlaying(autoPlay && !prefersReducedMotion)
+    setLooping(loop)
+  }, [slides, autoPlay, loop]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!playing || !slide || inspecting) return
 
     const scheduleFloor =
       schedule.delays.length > 0 ? schedule.delays[schedule.delays.length - 1] + 1200 * speed : 0
     const dwell = Math.max(dwellTimeFor(slide, speed, autoPlayIntervalMs), scheduleFloor)
 
     if (atEnd) {
-      if (!looping) {
-        setPlaying(false)
-        return
-      }
-      const id = window.setTimeout(() => setIndex(0), dwell)
+      const id = window.setTimeout(() => {
+        onComplete?.()
+        if (looping) setIndex(0)
+        else setPlaying(false)
+      }, dwell)
       return () => window.clearTimeout(id)
     }
 
     const id = window.setTimeout(() => setIndex((current) => current + 1), dwell)
     return () => window.clearTimeout(id)
-  }, [playing, looping, atEnd, slide, speed, autoPlayIntervalMs, schedule])
+  }, [playing, looping, atEnd, slide, speed, autoPlayIntervalMs, schedule, inspecting, onComplete])
 
   useEffect(() => {
     setCaptionIndex(-1)
@@ -177,6 +194,10 @@ export function JourneyPlayer({
       aria-label={slide.title ?? "Diagram journey"}
       tabIndex={0}
       onKeyDown={handleKeyDown}
+      onMouseEnter={() => setInspecting(true)}
+      onMouseLeave={() => setInspecting(false)}
+      onFocusCapture={() => setInspecting(true)}
+      onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setInspecting(false) }}
       className={cn("flex flex-col gap-4 outline-none", className)}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">

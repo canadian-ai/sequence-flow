@@ -21,6 +21,9 @@
         { "path": "components/ui/sequence-diagram/sequence-diagram.tsx", "type": "registry:component", "target": "components/ui/sequence-diagram/sequence-diagram.tsx" },
         { "path": "components/ui/sequence-diagram/journey-player.tsx", "type": "registry:component", "target": "components/ui/sequence-diagram/journey-player.tsx" },
         { "path": "components/ui/sequence-diagram/journey-markdown.ts", "type": "registry:component", "target": "components/ui/sequence-diagram/journey-markdown.ts" },
+        { "path": "components/ui/sequence-diagram/html-runtime.ts", "type": "registry:component", "target": "components/ui/sequence-diagram/html-runtime.ts" },
+        { "path": "components/ui/sequence-diagram/sequence-flow-element.ts", "type": "registry:component", "target": "components/ui/sequence-diagram/sequence-flow-element.ts" },
+        { "path": "components/ui/sequence-diagram/browser.ts", "type": "registry:component", "target": "components/ui/sequence-diagram/browser.ts" },
         { "path": "components/ui/sequence-diagram/index.ts", "type": "registry:component", "target": "components/ui/sequence-diagram/index.ts" },
         { "path": "registry/skill/SKILL.md", "type": "registry:file", "target": "skills/sequence-diagram/SKILL.md" }
       ],
