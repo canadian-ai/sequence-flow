@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useMemo, useState } from "react"
-import { Check, Copy, Download, Search } from "lucide-react"
+import { Check, Copy, Download, Pause, Play, Search } from "lucide-react"
 
 import { downloadJourneyHtml, JourneyPlayer } from "@/components/ui/sequence-diagram"
 import { cn } from "@/lib/utils"
@@ -12,6 +12,7 @@ export function JourneyCatalog({ hero = false }: { hero?: boolean }) {
   const [query, setQuery] = useState("")
   const [selected, setSelected] = useState(journeyCatalog[0].id)
   const [copied, setCopied] = useState<string | null>(null)
+  const [autoRotate, setAutoRotate] = useState(true)
   const examples = useMemo(() => journeyCatalog.filter((item) => (kind === "All" || item.kind === kind) && `${item.title} ${item.industry} ${item.summary}`.toLowerCase().includes(query.toLowerCase())), [kind, query])
   const active = examples.find((item) => item.id === selected) ?? examples[0] ?? journeyCatalog[0]
 
@@ -38,8 +39,8 @@ export function JourneyCatalog({ hero = false }: { hero?: boolean }) {
       </div>
     </div>
     <div className="flex min-w-0 flex-col gap-4 bg-background p-3 sm:p-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div className="flex max-w-2xl flex-col gap-1"><span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{active.industry} / {active.kind}</span><h3 className="font-serif text-2xl font-bold">{active.title}</h3><p className="text-sm leading-relaxed text-muted-foreground">{active.summary}</p></div><button type="button" onClick={() => downloadJourneyHtml(active.slides, { title: active.title })} className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 border border-border px-3 text-xs font-medium hover:bg-secondary"><Download className="size-4" aria-hidden />Export HTML</button></div>
-      <JourneyPlayer key={active.id} slides={active.slides} height={hero ? 410 : 360} autoPlay loop={false} onComplete={advanceUseCase} />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div className="flex max-w-2xl flex-col gap-1"><span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{active.industry} / {active.kind}</span><h3 className="font-serif text-2xl font-bold">{active.title}</h3><p className="text-sm leading-relaxed text-muted-foreground">{active.summary}</p></div><div className="flex shrink-0 items-center gap-2"><button type="button" onClick={() => setAutoRotate((value) => !value)} aria-pressed={autoRotate} className={cn("inline-flex min-h-10 items-center justify-center gap-2 border border-border px-3 text-xs font-medium", autoRotate ? "bg-primary text-primary-foreground" : "hover:bg-secondary")}>{autoRotate ? <Pause className="size-4" aria-hidden /> : <Play className="size-4" aria-hidden />}{autoRotate ? "Autoplay on" : "Autoplay off"}</button><button type="button" onClick={() => downloadJourneyHtml(active.slides, { title: active.title })} className="inline-flex min-h-10 items-center justify-center gap-2 border border-border px-3 text-xs font-medium hover:bg-secondary"><Download className="size-4" aria-hidden />Export HTML</button></div></div>
+      <JourneyPlayer key={active.id} slides={active.slides} height={hero ? 410 : 360} autoPlay={autoRotate} loop={false} onComplete={autoRotate ? advanceUseCase : undefined} />
       <div className="border border-border bg-card"><div className="flex items-center justify-between gap-3 border-b border-border px-3 py-2"><span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Architecture prompt</span><button type="button" onClick={() => copy(active.id, active.command)} className="inline-flex min-h-8 items-center gap-2 px-2 text-xs font-medium hover:bg-secondary">{copied === active.id ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}{copied === active.id ? "Copied" : "Copy prompt"}</button></div><p className="p-3 font-mono text-xs leading-relaxed text-muted-foreground">{active.command}</p></div>
     </div>
   </div>

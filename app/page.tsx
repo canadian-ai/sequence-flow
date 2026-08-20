@@ -4,6 +4,7 @@ import Link from "next/link"
 import { EditorWorkbench } from "@/components/demo/editor-workbench"
 import { JourneyCatalog } from "@/components/demo/journey-catalog"
 import { HeroInstall } from "@/components/hero-install"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 const nativeHtml = `<script type="module" src="/sequence-flow.js"></script>
 <sequence-flow-journey theme="dark">
@@ -15,12 +16,12 @@ const nativeHtml = `<script type="module" src="/sequence-flow.js"></script>
 
 export default function Page() {
   return <main className="min-h-screen overflow-x-hidden">
-    <nav className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur" aria-label="Primary navigation"><div className="mx-auto flex min-h-14 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6"><Link href="#top" className="flex items-center gap-2 font-medium"><Image src="/icon-black.svg" alt="" width={22} height={22} className="size-5 dark:invert" priority /><span>Sequence Flow</span></Link><div className="hidden items-center gap-5 font-mono text-xs text-muted-foreground sm:flex"><Link href="#library" className="hover:text-foreground">Use cases</Link><Link href="#editor" className="hover:text-foreground">Editor</Link><Link href="#html" className="hover:text-foreground">Native HTML</Link><Link href="https://github.com/canadian-ai/sequence-flow" className="hover:text-foreground">GitHub</Link></div></div></nav>
+    <nav className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur" aria-label="Primary navigation"><div className="mx-auto flex min-h-14 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6"><Link href="#top" className="flex items-center gap-2 font-medium"><Image src="/icon-black.svg" alt="" width={22} height={22} className="size-5 dark:invert" priority /><span>Sequence Flow</span></Link><div className="flex items-center gap-5"><div className="hidden items-center gap-5 font-mono text-xs text-muted-foreground sm:flex"><Link href="#library" className="hover:text-foreground">Use cases</Link><Link href="#editor" className="hover:text-foreground">Editor</Link><Link href="#html" className="hover:text-foreground">Native HTML</Link><Link href="https://github.com/canadian-ai/sequence-flow" className="hover:text-foreground">GitHub</Link></div><ThemeToggle /></div></div></nav>
 
     <header id="top" className="border-b border-border">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 sm:py-16">
         <div className="grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(360px,.65fr)]">
-          <div className="flex max-w-4xl flex-col gap-5"><div className="flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground"><span>Open source</span><span>/</span><span>Business + technical journeys</span><span>/</span><span>MIT</span></div><h1 className="text-balance font-serif text-5xl font-bold leading-[.98] tracking-tight sm:text-7xl">See how work moves, from intent to outcome.</h1><p className="max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">Explore complete customer, operations, healthcare, commerce, identity, payments, and infrastructure journeys. Each story plays automatically, then hands off to the next business.</p></div>
+          <div className="flex max-w-4xl flex-col gap-5"><div className="flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground"><span>Open source</span><span>/</span><span>Business + technical journeys</span><span>/</span><span>MIT</span></div><h1 className="text-balance font-serif text-5xl font-bold leading-[.98] tracking-tight sm:text-7xl">See how work moves, from intent to outcome.</h1><p className="max-w-2xl text-pretty text-base font-medium leading-relaxed text-foreground sm:text-lg">Built for developers.</p><p className="max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">Sequence Flow intentionally stays narrow: installable visualization primitives and portable agent instructions, with no product workspace or proprietary runtime attached. AI has made it easy to generate code, but understanding a system as a whole still leans on Mermaid &mdash; powerful, yet easy to get lost in. This tool makes that legible.</p></div>
           <HeroInstall />
         </div>
         <div id="library"><JourneyCatalog hero /></div>

@@ -37,9 +37,9 @@ export function HeroInstall() {
         </div>
       </div>
       <div className="overflow-hidden border border-border bg-card">
-        <div className="flex items-center gap-3 px-3 py-3 sm:px-4">
-          <Terminal className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-          <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-xs text-foreground sm:text-sm">{command}</code>
+        <div className="flex items-start gap-3 px-3 py-3 sm:px-4">
+          <Terminal className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <code className="min-w-0 flex-1 whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-foreground sm:text-sm">{command}</code>
           <button type="button" onClick={copyCommand} className="inline-flex min-h-9 shrink-0 items-center gap-2 border border-border px-3 text-xs font-medium transition-colors hover:bg-secondary" aria-label="Copy install command">
             {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
             <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
