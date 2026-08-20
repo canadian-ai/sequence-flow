@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "build:web-component": "esbuild components/ui/sequence-diagram/browser.ts --bundle --format=esm --minify --outfile=public/sequence-flow.js",
     "test": "pnpm dlx vitest@3.2.4 run tests/*.test.ts",
     "test:e2e": "pnpm dlx @playwright/test@1.54.2 test"
   },
@@ -31,6 +32,7 @@
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.28.2",
     "postcss": "^8.5",
     "tailwindcss": "^4.3.3",
     "typescript": "5.7.3"

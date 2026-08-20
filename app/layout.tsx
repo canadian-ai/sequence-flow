@@ -7,9 +7,9 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' })
 
 export const metadata: Metadata = {
-  title: 'Sequence Flow — React sequence diagrams',
+  title: 'Sequence Flow — Interactive journeys for people and systems',
   description:
-    'An open-source developer primitive from Canadian AI for rendering Mermaid sequenceDiagram syntax as an interactive React Flow canvas.',
+    'Author guided business and technical journeys, then ship them in React, native HTML, or a self-contained offline file.',
   generator: 'Next.js',
   icons: {
     icon: '/icon-black.svg',
