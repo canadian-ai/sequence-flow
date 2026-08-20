@@ -16,6 +16,14 @@ describe("standalone journey HTML", () => {
     expect(html).toContain('id="play"')
     expect(sanitizeJourneyFilename("Customer / Onboarding")).toBe("customer-onboarding.html")
   })
+
+  it("renders a graphical, animated diagram rather than raw source", () => {
+    const html = createStandaloneJourneyHtml(journeyCatalog[0].slides, { title: "Diagram" })
+    expect(html).toContain('id="stage"')
+    expect(html).toContain('id="canvas"')
+    expect(html).toContain("actor anim-rise")
+    expect(html).toContain("marker-end")
+  })
 })
 
 describe("journey catalog", () => {
