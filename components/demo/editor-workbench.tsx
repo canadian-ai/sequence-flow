@@ -15,6 +15,7 @@ import { getContrastColor } from "./color-utils"
 import { architectureJourney } from "./journeys"
 import { Playground } from "./playground"
 import { DEFAULT_THEME, THEMES, type ColorMode } from "./themes"
+import { encodeJourneyFragment } from "@/lib/journey-url"
 
 const tabs = [
   { id: "sequence", label: "Sequence flow" },
@@ -166,6 +167,7 @@ function JourneyEditor() {
   const [json, setJson] = useState(initialJourneyJson)
   const [themeId, setThemeId] = useState(DEFAULT_THEME.id)
   const [mode, setMode] = useState<ColorMode>("light")
+  const [shareStatus, setShareStatus] = useState("")
   const source = format === "markdown" ? markdown : json
   const setSource = format === "markdown" ? setMarkdown : setJson
 
@@ -210,7 +212,19 @@ function JourneyEditor() {
     </div>
     <div className="min-w-0 space-y-4">
       <JourneyThemePicker themeId={themeId} mode={mode} onThemeChange={setThemeId} onModeChange={setMode} />
-      <div className="flex justify-end"><button type="button" onClick={() => downloadJourneyHtml(parsed.slides, { title: "sequence-flow-journey", theme: mode })} className="inline-flex min-h-10 items-center gap-2 border border-border bg-card px-3 text-xs font-medium hover:bg-secondary"><Download className="size-4" aria-hidden />Export self-contained HTML</button></div>
+      <div className="flex flex-wrap justify-end gap-2">
+        <button type="button" disabled={Boolean(parsed.error)} onClick={async () => {
+          try {
+            const fragment = encodeJourneyFragment({ title: "Sequence Flow Journey", slides: parsed.slides })
+            await navigator.clipboard.writeText(window.location.origin + "/journey" + fragment)
+            setShareStatus("Link copied")
+          } catch (error) {
+            setShareStatus(error instanceof Error ? error.message : "Could not copy link")
+          }
+        }} className="inline-flex min-h-10 items-center gap-2 border border-border bg-card px-3 text-xs font-medium hover:bg-secondary disabled:opacity-50"><Copy className="size-4" aria-hidden />Copy journey URL</button>
+        <button type="button" onClick={() => downloadJourneyHtml(parsed.slides, { title: "sequence-flow-journey", theme: mode })} className="inline-flex min-h-10 items-center gap-2 border border-border bg-card px-3 text-xs font-medium hover:bg-secondary"><Download className="size-4" aria-hidden />Export self-contained HTML</button>
+      </div>
+      {shareStatus ? <p role="status" className="text-xs text-muted-foreground">{shareStatus}</p> : null}
       <div style={journeyStyle} className="min-w-0 overflow-hidden border border-border bg-background p-2 sm:p-3"><JourneyPlayer slides={parsed.slides} height={460} /></div>
       <CodeBlock code={buildJourneyCode(parsed.slides, themeId, mode)} />
     </div>

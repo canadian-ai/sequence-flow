@@ -225,3 +225,11 @@ Open `http://localhost:3000` to use the playground.
 ## License
 
 MIT © 2026 Canadian AI Solutions Inc. See [LICENSE](./LICENSE).
+
+## Share journeys as artifacts
+
+A journey can now be shared as a self-contained URL: in the hosted Journey editor, choose **Copy journey URL**. The link opens at `/journey#data=<encoded-artifact>`, containing the entire JSON journey in the browser URL fragment. No database, account, or API upload is required. The URL can be long for multi-step journeys; use exported HTML or a named hosted artifact for polished distribution.
+
+The fragment is readable by anyone with the link. Never include access tokens, customer personal information, or confidential implementation details in a shared journey.
+
+Named public artifacts can live under `public/artifacts/*.json` and have a short route. A worked example is [Food Logix membership approval](https://sequence-flow.canadian-ai.app/journey/food-logix-membership), with its [annotated Markdown source](./public/artifacts/food-logix-membership-approval.md) and [JSON artifact](./public/artifacts/food-logix-membership-approval.json). To add a named artifact, commit its Markdown/JSON and a corresponding app route; no database is needed.

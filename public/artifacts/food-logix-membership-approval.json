@@ -1,0 +1,74 @@
+{
+  "title": "Food Logix — Membership approval and Stripe Billing",
+  "description": "Proposed business journey. Company approval comes before payment, paid membership activates only from verified Stripe events, and company verification remains separate.",
+  "slides": [
+    {
+      "id": "apply",
+      "title": "1. Apply without payment",
+      "caption": "A company chooses Explorer, Pro, Premium or Enterprise and submits an application. No payment or member access is granted at this point.",
+      "messageCaptions": [
+        "The applicant chooses the intended membership and submits business information.",
+        "Convex records the requested tier and pending review.",
+        "The applicant receives an acknowledgement, not a payment request."
+      ],
+      "chart": "sequenceDiagram\n  actor C as Company\n  participant W as Food Logix\n  participant D as Convex\n  participant E as Email\n  C->>W: Select plan and apply\n  W->>D: Store pending application and tier\n  D->>E: Queue confirmation\n  E-->>C: Application received"
+    },
+    {
+      "id": "review",
+      "title": "2. Company review",
+      "caption": "Food Logix reviews the applicant. A declined application receives a notice and does not proceed to checkout.",
+      "messageCaptions": [
+        "An authorized Food Logix administrator evaluates the business.",
+        "The approval or decline decision is audited.",
+        "The applicant is informed of the decision."
+      ],
+      "chart": "sequenceDiagram\n  actor A as Food Logix Admin\n  participant W as Food Logix\n  participant D as Convex\n  participant E as Email\n  actor C as Company\n  A->>W: Review application\n  W->>D: Record approval or decline\n  D->>E: Queue decision notice\n  E-->>C: Approved or declined"
+    },
+    {
+      "id": "explorer",
+      "title": "3. Explorer activates for free",
+      "caption": "For approved Explorer applications, the membership activates without Stripe checkout. Company verification and listing approval remain separate.",
+      "messageCaptions": [
+        "The free Explorer plan is approved.",
+        "Convex activates Explorer entitlements.",
+        "The applicant receives account access instructions."
+      ],
+      "chart": "sequenceDiagram\n  actor A as Food Logix Admin\n  participant D as Convex\n  participant E as Email\n  actor C as Company\n  A->>D: Approve Explorer application\n  D->>D: Activate free membership\n  D->>E: Queue welcome email\n  E-->>C: Explorer access active"
+    },
+    {
+      "id": "payment-link",
+      "title": "4. Paid plan receives payment link",
+      "caption": "For approved Pro ($2,500/year), Premium ($5,000/year) or Enterprise ($10,000/year), create a customer-specific secure Stripe Checkout link. Approval alone never grants paid access.",
+      "messageCaptions": [
+        "Food Logix approves the paid application.",
+        "The backend records approved but pending payment.",
+        "Stripe creates a customer-bound Checkout Session for the server-selected annual plan.",
+        "The applicant receives a personalized secure link."
+      ],
+      "chart": "sequenceDiagram\n  actor A as Food Logix Admin\n  participant D as Convex\n  participant S as Stripe Billing\n  participant E as Email\n  actor C as Company\n  A->>D: Approve paid application\n  D->>D: Mark approved pending payment\n  D->>S: Create customer and Checkout Session\n  S-->>D: Secure checkout URL\n  D->>E: Send payment invitation\n  E-->>C: Personalized payment link"
+    },
+    {
+      "id": "activation",
+      "title": "5. Verified payment activates membership",
+      "caption": "The backend verifies Stripe's signed paid-invoice event, checks plan and company mapping, and deduplicates retries. A successful browser redirect alone is not proof of payment.",
+      "messageCaptions": [
+        "The company pays through Stripe-hosted Checkout.",
+        "Stripe sends a signed payment webhook to Convex.",
+        "Convex verifies and deduplicates the event before activating the matching plan.",
+        "The company receives confirmation and accesses its membership with Clerk sign-in."
+      ],
+      "chart": "sequenceDiagram\n  actor C as Company\n  participant S as Stripe Billing\n  participant D as Convex\n  participant E as Email\n  participant K as Clerk Auth\n  C->>S: Pay securely\n  S-->>D: Signed invoice.paid webhook\n  D->>D: Verify event and company mapping\n  D->>D: Activate paid entitlement once\n  D->>E: Queue confirmation\n  E-->>C: Membership active\n  C->>K: Sign in\n  K-->>D: Verified company identity\n  D-->>C: Authorized dashboard"
+    },
+    {
+      "id": "renewals",
+      "title": "6. Renewals, failures and cancellation",
+      "caption": "Annual renewal events update the paid-through date. Failed payments, subscription cancellation and expiration follow an explicit grace-period and notification policy. Verified badges and listing moderation are not payment entitlements.",
+      "messageCaptions": [
+        "Stripe sends signed renewal or failed-payment events.",
+        "Convex applies idempotent renewal, grace-period or expiry rules.",
+        "The company receives the relevant billing notification."
+      ],
+      "chart": "sequenceDiagram\n  participant S as Stripe Billing\n  participant D as Convex\n  participant E as Email\n  actor C as Company\n  S-->>D: Signed renewal or failure event\n  D->>D: Apply subscription lifecycle policy\n  D->>D: Extend or restrict paid entitlements\n  D->>E: Queue billing update\n  E-->>C: Renewal or action required"
+    }
+  ]
+}
