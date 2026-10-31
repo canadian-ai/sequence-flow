@@ -168,19 +168,67 @@ function JourneyEditor() {
   const [themeId, setThemeId] = useState(DEFAULT_THEME.id)
   const [mode, setMode] = useState<ColorMode>("light")
   const [shareStatus, setShareStatus] = useState("")
+  const [expiresIn, setExpiresIn] = useState<"1h" | "24h" | "7d">("24h")
+  const [publishing, setPublishing] = useState(false)
+  const [published, setPublished] = useState<{ url: string; slug: string; expiresAt: string; deleteToken: string } | null>(null)
   const source = format === "markdown" ? markdown : json
   const setSource = format === "markdown" ? setMarkdown : setJson
 
   const parsed = useMemo(() => {
     try {
-      if (format === "markdown") return { slides: parseJourneyMarkdown(markdown).slides, error: null as string | null }
+      if (format === "markdown") { const doc = parseJourneyMarkdown(markdown); return { slides: doc.slides, title: doc.title || "Sequence Flow Journey", error: null as string | null } }
       const value = JSON.parse(json) as JourneySlide[]
       if (!Array.isArray(value)) throw new Error("Journey must be an array of slides.")
-      return { slides: value, error: null as string | null }
+      return { slides: value, title: "Sequence Flow Journey", error: null as string | null }
     } catch (error) {
-      return { slides: architectureJourney, error: error instanceof Error ? error.message : `Invalid journey ${format}` }
+      return { slides: architectureJourney, title: "Sequence Flow Journey", error: error instanceof Error ? error.message : `Invalid journey ${format}` }
     }
   }, [format, json, markdown])
+
+
+  async function publishJourney() {
+    if (parsed.error || publishing) return
+    setPublishing(true)
+    setShareStatus("")
+    try {
+      const response = await fetch("https://sequence-flow-journeys.icy-dream-7fdb.workers.dev/v1/journeys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "omit",
+        body: JSON.stringify({ title: parsed.title, slides: parsed.slides, expiresIn }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || "Could not publish journey")
+      setPublished({url: result.url, slug: result.slug, deleteToken: result.deleteToken, expiresAt: result.expiresAt})
+      try {
+        await navigator.clipboard.writeText(result.url)
+        setShareStatus("Published and link copied")
+      } catch {
+        setShareStatus("Published! Copy the link below.")
+      }
+    } catch(error) {
+      setShareStatus(error instanceof Error ? error.message : "Could not publish journey")
+    } finally {
+      setPublishing(false)
+    }
+  }
+
+  async function revokePublishedJourney() {
+    if (!published) return
+    try {
+      const response = await fetch("https://sequence-flow-journeys.icy-dream-7fdb.workers.dev/v1/journeys/" + published.slug, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + published.deleteToken },
+        credentials: "omit",
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || "Could not revoke journey")
+      setPublished(null)
+      setShareStatus("Journey revoked. Cached copies may take a short time to expire.")
+    } catch(error) {
+      setShareStatus(error instanceof Error ? error.message : "Could not revoke journey")
+    }
+  }
 
   const activeTheme = THEMES.find((theme) => theme.id === themeId) ?? DEFAULT_THEME
   const colors = activeTheme[mode]
@@ -212,6 +260,29 @@ function JourneyEditor() {
     </div>
     <div className="min-w-0 space-y-4">
       <JourneyThemePicker themeId={themeId} mode={mode} onThemeChange={setThemeId} onModeChange={setMode} />
+      <div className="flex flex-wrap items-center justify-between gap-3 border border-border bg-card p-3">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="text-sm font-medium">Publish a temporary journey</span>
+          <span className="text-xs text-muted-foreground">Free · public link · no account required · expires automatically. Do not publish confidential data.</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor="journey-expiration" className="text-xs text-muted-foreground">Expires</label>
+          <select id="journey-expiration" aria-label="Journey expiration" value={expiresIn} onChange={(event) => setExpiresIn(event.target.value as "1h" | "24h" | "7d")} className="min-h-10 border border-border bg-background px-2 text-sm text-foreground">
+            <option value="1h">1 hour</option>
+            <option value="24h">24 hours</option>
+            <option value="7d">7 days</option>
+          </select>
+          <button type="button" disabled={Boolean(parsed.error) || publishing} onClick={publishJourney} className="inline-flex min-h-10 items-center border border-transparent bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-50">{publishing ? "Publishing…" : "Publish free"}</button>
+        </div>
+      </div>
+      {published ? <div className="flex flex-col gap-2 border border-border bg-card p-3">
+        <span className="text-xs text-muted-foreground">Published snapshot · expires {new Date(published.expiresAt).toLocaleString()}</span>
+        <a href={published.url} target="_blank" rel="noopener noreferrer" className="break-all text-sm text-foreground underline underline-offset-4">{published.url}</a>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => navigator.clipboard.writeText(published.url).then(() => setShareStatus("Link copied")).catch(() => setShareStatus("Copy failed"))} className="border border-border px-3 py-2 text-xs hover:bg-secondary">Copy link</button>
+          <button type="button" onClick={revokePublishedJourney} className="border border-border px-3 py-2 text-xs hover:bg-secondary">Revoke journey</button>
+        </div>
+      </div> : null}
       <div className="flex flex-wrap justify-end gap-2">
         <button type="button" disabled={Boolean(parsed.error)} onClick={async () => {
           try {
