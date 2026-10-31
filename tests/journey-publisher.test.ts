@@ -34,6 +34,14 @@ describe("free HTTP/MCP journey publisher",()=>{
     const res=await call("/v1/journeys",{method:"POST",headers:{Origin:"https://attacker.test"},body:JSON.stringify(example)});
     expect(res.status).toBe(403);
   });
+  it("allows trusted MCP browser preflight but not cross-origin browser publishing",async()=>{
+    const {call}=fixture();
+    const options=await call("/mcp",{method:"OPTIONS",headers:{Origin:"https://chatgpt.com"}});
+    expect(options.status).toBe(204);
+    expect(options.headers.get("Access-Control-Allow-Origin")).toBe("https://chatgpt.com");
+    const post=await call("/v1/journeys",{method:"POST",headers:{Origin:"https://chatgpt.com"},body:JSON.stringify(example)});
+    expect(post.status).toBe(403);
+  });
   it("rejects unsupported diagram types and overly long content",async()=>{
     const {call}=fixture();
     const invalid=await call("/v1/journeys",{method:"POST",body:JSON.stringify({...example,slides:[{id:"start",chart:"flowchart TB\n A-->B"}]})});
