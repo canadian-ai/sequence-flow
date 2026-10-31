@@ -47,7 +47,7 @@ const tools = [
 function headers(request) {
   const origin = request.headers.get("Origin");
   return {
-    "Access-Control-Allow-Origin": origin === API_ORIGIN ? API_ORIGIN : API_ORIGIN,
+    "Access-Control-Allow-Origin": ACCEPTED_ORIGINS.has(origin) ? origin : API_ORIGIN,
     "Access-Control-Allow-Headers": "Authorization, Content-Type, MCP-Protocol-Version, Mcp-Method, Mcp-Name",
     "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
     "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
@@ -189,7 +189,7 @@ async function handle(request,env) {
   const origin=request.headers.get("Origin");
   if (origin && !ACCEPTED_ORIGINS.has(origin)) return failure(request,"Forbidden origin",403);
   if (request.method==="OPTIONS") {
-    if (origin!==API_ORIGIN) return failure(request,"Forbidden origin",403);
+    if (!ACCEPTED_ORIGINS.has(origin)) return failure(request,"Forbidden origin",403);
     return new Response(null,{status:204,headers:headers(request)});
   }
   if (url.pathname==="/mcp") return handleMcp(request,env);
