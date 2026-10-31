@@ -225,3 +225,9 @@ Open `http://localhost:3000` to use the playground.
 ## License
 
 MIT © 2026 Canadian AI Solutions Inc. See [LICENSE](./LICENSE).
+
+## Share journeys without publishing customer artifacts
+
+In the hosted Journey editor, choose **Copy journey URL**. The link opens at `/journey#data=<encoded-artifact>` and carries the entire JSON journey in the browser URL fragment. Sequence Flow does not save the document to a server or repository. Anyone with the complete link can read it, so **do not use this mode to share secrets or confidential journeys**. Use private, authenticated storage for restricted content.
+
+For large journeys, export a self-contained HTML file instead of making an unusually long URL. The component remains a reusable public visualization primitive; customer-specific journeys and workflows must live outside this open-source repository.
