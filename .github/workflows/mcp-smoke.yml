@@ -1,0 +1,24 @@
+name: Publisher live MCP smoke
+
+on:
+  pull_request:
+    paths:
+      - "services/journey-publisher/worker.js"
+      - "tests/smoke-mcp.mjs"
+      - ".github/workflows/mcp-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Exercise live free MCP publisher
+        run: node tests/smoke-mcp.mjs

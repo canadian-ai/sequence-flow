@@ -235,3 +235,37 @@ For large journeys, export a self-contained HTML file instead of making an unusu
 ### Load a journey via HTTP query
 
 The hosted viewer supports `/journey?slug=<public-slug>`. It performs a read-only GET against an external journey storage service. The user-specific journey content is **not** included in the open-source repository, build, or Git history. This is intended for publicly shareable, non-confidential journeys only; anyone with the slug can read the artifact. Fragment-based `/journey#data=...` links remain supported for fully self-contained journeys.
+
+## Free short-lived publishing (HTTP and MCP)
+
+The hosted editor's **Publish free** action publishes a temporary public journey outside this repository. Choose **1 hour, 24 hours, or 7 days**. The publisher uses a separate Cloudflare Worker and KV with automatic expiry; it does not create a GitHub commit or charge Canadian AI credits.
+
+- Public viewer: `https://sequence-flow.canadian-ai.app/journey?slug=<generated-random-slug>`
+- Public read API: `GET https://sequence-flow-journeys.icy-dream-7fdb.workers.dev/v1/journeys/<slug>`
+- Website publisher: `POST https://sequence-flow-journeys.icy-dream-7fdb.workers.dev/v1/journeys` (requires the Sequence Flow browser origin)
+- MCP server: `https://sequence-flow-journeys.icy-dream-7fdb.workers.dev/mcp` (stateless Streamable HTTP)
+
+### MCP tools
+
+- `publish_journey`: free, accepts `title`, optional `description`, `slides` (each with `id` and Mermaid `sequenceDiagram` chart, optional title/captions), and `expiresIn` (`1h`, `24h`, `7d`). Returns URL, slug, expiration, and a private deletion token. No login, credit balance or paid plan is required for this free public beta.
+- `revoke_journey`: takes the exact `slug` and private `deleteToken` to revoke the journey.
+
+For example, an MCP `tools/call` request after initialization:
+
+```json
+{
+  "jsonrpc":"2.0",
+  "id":2,
+  "method":"tools/call",
+  "params":{
+    "name":"publish_journey",
+    "arguments":{
+      "title":"Checkout walkthrough",
+      "expiresIn":"24h",
+      "slides":[{"id":"checkout","chart":"sequenceDiagram\n  Buyer->>Store: Checkout\n  Store-->>Buyer: Confirmation"}]
+    }
+  }
+}
+```
+
+Sharing is **public** to anyone holding the link. Never publish passwords, API keys, personal information, customer-private data, or internal security architecture. Publishing is rate-limited, limited to 20 slides and 25 KB, and can be revoked with the private deletion token. Cloudflare KV is eventually consistent, so availability and revocation can lag briefly across regions. The server's code is in `services/journey-publisher/worker.js`; individual journey contents and history are never committed.
