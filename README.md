@@ -231,3 +231,7 @@ MIT © 2026 Canadian AI Solutions Inc. See [LICENSE](./LICENSE).
 In the hosted Journey editor, choose **Copy journey URL**. The link opens at `/journey#data=<encoded-artifact>` and carries the entire JSON journey in the browser URL fragment. Sequence Flow does not save the document to a server or repository. Anyone with the complete link can read it, so **do not use this mode to share secrets or confidential journeys**. Use private, authenticated storage for restricted content.
 
 For large journeys, export a self-contained HTML file instead of making an unusually long URL. The component remains a reusable public visualization primitive; customer-specific journeys and workflows must live outside this open-source repository.
+
+### Load a journey via HTTP query
+
+The hosted viewer supports `/journey?slug=<public-slug>`. It performs a read-only GET against an external journey storage service. The user-specific journey content is **not** included in the open-source repository, build, or Git history. This is intended for publicly shareable, non-confidential journeys only; anyone with the slug can read the artifact. Fragment-based `/journey#data=...` links remain supported for fully self-contained journeys.
