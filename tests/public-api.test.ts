@@ -16,6 +16,19 @@ describe("public component API", () => {
     expect(index).toContain("journeySlidesFromMarkdown")
   })
 
+  it("publishes external selections and invisible hit-target guards", () => {
+    const diagram = readFileSync(new URL("../components/ui/sequence-diagram/sequence-diagram.tsx", import.meta.url), "utf8")
+    const player = readFileSync(new URL("../components/ui/sequence-diagram/journey-player.tsx", import.meta.url), "utf8")
+    const edge = readFileSync(new URL("../components/ui/sequence-diagram/edges.tsx", import.meta.url), "utf8")
+    const css = readFileSync(new URL("../components/ui/sequence-diagram/sequence-diagram.css", import.meta.url), "utf8")
+    expect(diagram).toContain("selectedMessageIndex")
+    expect(diagram).toContain("onMessageSelect")
+    expect(player).toContain("activeSlideId")
+    expect(player).toContain("onSlideChange")
+    expect(edge).toContain('className="seq-hit-target"')
+    expect(css).toContain("stroke: transparent !important")
+  })
+
   it("compiles markdown directly to JourneySlide[]", () => {
     const slides = journeySlidesFromMarkdown(
       "## Hello\n```mermaid\nsequenceDiagram\nA->>B: Hi\n```",

@@ -169,3 +169,8 @@
     opacity: 0;
   }
 }
+
+/* Ensure host-wide React Flow selectors cannot paint transparent interaction edges. */
+.sequence-flow-diagram .react-flow__edge .seq-hit-target { stroke: transparent !important; fill: none !important; }
+.sequence-flow-diagram .react-flow__edge .seq-edge-dot { stroke: none !important; }
+.sequence-flow-diagram .react-flow__edge .react-flow__edge-path { stroke: var(--seq-accent) !important; stroke-width: 1.5px; }

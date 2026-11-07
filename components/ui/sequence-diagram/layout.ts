@@ -173,6 +173,7 @@ export function buildSequenceGraph(
         to: ev.to,
         self: ev.self,
         data: {
+          index: ev.index,
           text: ev.text,
           line: ev.line,
           head: ev.head,
