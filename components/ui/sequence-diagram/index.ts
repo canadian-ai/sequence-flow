@@ -7,7 +7,7 @@ export type { JourneyMarkdownDocument } from "./journey-markdown"
 export { createStandaloneJourneyHtml, downloadJourneyHtml, sanitizeJourneyFilename } from "./html-runtime"
 export type { JourneyHtmlOptions } from "./html-runtime"
 export { SequenceFlowJourneyElement, registerSequenceFlowJourney } from "./sequence-flow-element"
-export { parseSequenceDiagram } from "./parser"
+export { parseSequenceDiagram, normalizeSequenceSource } from "./parser"
 export { buildSequenceGraph } from "./layout"
 export type {
   SeqModel,

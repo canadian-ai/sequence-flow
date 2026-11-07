@@ -18,6 +18,18 @@ npx shadcn@latest add https://sequence-flow.canadian-ai.app/r/sequence-diagram.j
 
 `registry.json` is the source of truth for the component definition. The generated `public/r/*.json` files are a compatibility layer for existing consumers of the hosted registry URL.
 
+## Clean up AI-generated diagrams
+
+Paste Mermaid directly into the editor and select **Clean up pasted flow** to
+remove common model-output artifacts: outer Markdown fences, literal escaped
+newlines, HTML line-break tags and harmless formatting wrappers. The parser
+also normalizes these on rendering, and applications can call
+`normalizeSequenceSource(input)` explicitly.
+
+It intentionally preserves valid Mermaid labels, supported annotations,
+and arbitrary text rather than aggressively stripping unfamiliar tags.
+Review any unusual syntax before publishing.
+
 ## Pass a sequence flow
 
 Use `SequenceDiagram` in any height-constrained container:
