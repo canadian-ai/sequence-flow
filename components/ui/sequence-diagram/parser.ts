@@ -22,7 +22,7 @@ export function normalizeSequenceSource(input: string): string {
   }
   // Remove only the outer Mermaid/code fence, never code-like message labels.
   source = source
-    .replace(/^` ``(?:mermaid|mmd|sequenceDiagram)?[ \t]*\n/i, "")
+    .replace(/^```(?:mermaid|mmd|sequenceDiagram)?[ \t]*\n/i, "")
     .replace(/\n[ \t]*```[ \t]*$/, "")
   if (!source.includes("\n") && /\\n|\\r\\n/.test(source)) {
     source = source.replace(/\\r\\n|\\n/g, "\n")
