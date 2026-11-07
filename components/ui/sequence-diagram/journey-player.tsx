@@ -13,7 +13,7 @@ import {
 
 import { cn } from "@/lib/utils"
 
-import { getStepSchedule } from "./layout"
+import { buildSequenceGraph, getStepSchedule } from "./layout"
 import { parseSequenceDiagram } from "./parser"
 import { SequenceDiagram } from "./sequence-diagram"
 import type { SequenceLayoutOptions } from "./types"
@@ -117,6 +117,17 @@ export function JourneyPlayer({
     [slide],
   )
   const hasCaptions = captions.some((caption) => caption.length > 0)
+  // Reserve adequate vertical space for the full sequence, rather than
+  // squeezing long journeys into a fixed 420px viewport.
+  const diagramHeight = useMemo(() => {
+    if (!slide) return height
+    const graph = buildSequenceGraph(parseSequenceDiagram(slide.chart), {
+      columnGap,
+      messageGap,
+      showBottomActors,
+    })
+    return Math.max(height, Math.min(760, Math.ceil(graph.height * 0.95)))
+  }, [slide, height, columnGap, messageGap, showBottomActors])
 
   function goTo(next: number) {
     setPlaying(false)
@@ -294,7 +305,7 @@ export function JourneyPlayer({
         </div>
       </div>
 
-      <div className="relative overflow-hidden border border-border bg-card" style={{ height }}>
+      <div className="relative overflow-hidden border border-border bg-card" style={{ height: diagramHeight }}>
         <SequenceDiagram
           key={slide.id}
           chart={slide.chart}

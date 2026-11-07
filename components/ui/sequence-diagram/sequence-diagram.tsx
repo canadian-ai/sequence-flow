@@ -3,7 +3,7 @@
 import "@xyflow/react/dist/base.css"
 import "./sequence-diagram.css"
 
-import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react"
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react"
 import {
   Background,
   BackgroundVariant,
@@ -116,7 +116,7 @@ const SequenceDiagramInner = forwardRef<SequenceDiagramHandle, SequenceDiagramPr
     ref,
   ) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const { getNodes } = useReactFlow()
+  const { getNodes, fitView: fitDiagramToBounds } = useReactFlow()
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null)
   const [hoveredParticipant, setHoveredParticipant] = useState<string | null>(null)
   const [hoveredBox, setHoveredBox] = useState<string | null>(null)
@@ -183,6 +183,32 @@ const SequenceDiagramInner = forwardRef<SequenceDiagramHandle, SequenceDiagramPr
     [getNodes],
   )
 
+  // React Flow's initial fitView can fire before the parent has its final
+  // dimensions. Refit on diagram content and container resize so arrows,
+  // labels and actor boxes remain fully visible on mobile, tab switches,
+  // and animated journeys.
+  useEffect(() => {
+    if (!fitView) return
+    const container = containerRef.current
+    if (!container || typeof ResizeObserver === "undefined") return
+    let frame = 0
+    const refit = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        if (container.clientWidth > 0 && container.clientHeight > 0) {
+          void fitDiagramToBounds({ padding: 0.22, maxZoom: 1, duration: 0 })
+        }
+      })
+    }
+    const observer = new ResizeObserver(refit)
+    observer.observe(container)
+    refit()
+    return () => {
+      observer.disconnect()
+      cancelAnimationFrame(frame)
+    }
+  }, [fitView, fitDiagramToBounds, nodes, edges])
+
   const hoverValue = useMemo(
     () => ({
       hoveredEdge,
@@ -211,8 +237,8 @@ const SequenceDiagramInner = forwardRef<SequenceDiagramHandle, SequenceDiagramPr
           nodeTypes={sequenceNodeTypes}
           edgeTypes={sequenceEdgeTypes}
           fitView={fitView}
-          fitViewOptions={{ padding: 0.15 }}
-          minZoom={0.2}
+          fitViewOptions={{ padding: 0.22, maxZoom: 1 }}
+          minZoom={0.06}
           maxZoom={2}
           proOptions={{ hideAttribution: false }}
           nodesDraggable={false}
