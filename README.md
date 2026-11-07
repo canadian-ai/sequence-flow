@@ -40,6 +40,33 @@ export function Example() {
 }
 ```
 
+## Integrate with external controls
+
+Sequence Flow uses the host theme. Do not apply generic `.react-flow__edge path`
+CSS to the whole chart: transparent hover targets can become thick black bars.
+Target `.react-flow__edge-path` instead. The component now scopes protection to
+`.seq-hit-target` so other React Flow installations are unaffected.
+
+```tsx
+const [selected, setSelected] = useState<number | null>(null)
+<SequenceDiagram chart={chart} selectedMessageIndex={selected}
+  onMessageSelect={({ index }) => setSelected(index)} />
+```
+
+The selected index is the parsed Mermaid event index. External accordions,
+buttons, or application state can select any message.
+`JourneyPlayer` also supports `activeSlideId` and `onSlideChange`.
+
+For plain JavaScript web-component journeys:
+
+```js
+const el = document.querySelector("sequence-flow-journey")
+el.selectSlide("validation")
+el.addEventListener("sequence-flow:slide-change", ({ detail }) => console.log(detail))
+```
+
+The web component is a textual journey; React renders the graphical viewer.
+
 ## Pass a journey as JSON / TypeScript
 
 A journey is an array of `JourneySlide` objects. Each slide owns a standalone Mermaid sequence diagram plus optional title, caption, and per-message commentary.

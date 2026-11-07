@@ -3,6 +3,8 @@
 import { createContext, useContext } from "react"
 
 export interface SequenceHoverState {
+  selectedMessageIndex: number | null
+  onMessageSelect: (event: { index: number; from: string; to: string; text: string }) => void
   hoveredEdge: string | null
   /** Participant hovered directly (its own box), independent of any edge. */
   hoveredParticipant: string | null
@@ -15,6 +17,8 @@ export interface SequenceHoverState {
 }
 
 export const SequenceHoverContext = createContext<SequenceHoverState>({
+  selectedMessageIndex: null,
+  onMessageSelect: () => {},
   hoveredEdge: null,
   hoveredParticipant: null,
   hoveredBox: null,

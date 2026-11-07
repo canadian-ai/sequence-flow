@@ -26,6 +26,8 @@ import { parseSequenceDiagram } from "./parser"
 import type { SequenceLayoutOptions } from "./types"
 
 export interface SequenceDiagramProps extends SequenceLayoutOptions {
+  selectedMessageIndex?: number | null
+  onMessageSelect?: (event: { index: number; from: string; to: string; text: string }) => void
   /** Mermaid-flavored sequence diagram definition. */
   chart: string
   className?: string
@@ -100,6 +102,8 @@ const SequenceDiagramInner = forwardRef<SequenceDiagramHandle, SequenceDiagramPr
     {
       chart,
       className,
+      selectedMessageIndex = null,
+      onMessageSelect,
       controls = true,
       background = true,
       fitView = true,
@@ -182,6 +186,8 @@ const SequenceDiagramInner = forwardRef<SequenceDiagramHandle, SequenceDiagramPr
   const hoverValue = useMemo(
     () => ({
       hoveredEdge,
+      selectedMessageIndex,
+      onMessageSelect: onMessageSelect ?? (() => {}),
       hoveredParticipant,
       hoveredBox,
       activeParticipants,
@@ -192,12 +198,12 @@ const SequenceDiagramInner = forwardRef<SequenceDiagramHandle, SequenceDiagramPr
       setParticipantHover: setHoveredParticipant,
       setBoxHover: setHoveredBox,
     }),
-    [hoveredEdge, hoveredParticipant, hoveredBox, activeParticipants],
+    [hoveredEdge, hoveredParticipant, hoveredBox, activeParticipants, selectedMessageIndex, onMessageSelect],
   )
 
   return (
     <SequenceHoverContext.Provider value={hoverValue}>
-      <div ref={containerRef} className={cn("relative size-full bg-background", className)}>
+      <div ref={containerRef} className={cn("sequence-flow-diagram relative size-full bg-background", className)}>
         <MarkerDefs />
         <ReactFlow
           nodes={nodes}

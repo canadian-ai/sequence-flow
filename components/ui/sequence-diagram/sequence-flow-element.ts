@@ -8,6 +8,15 @@ export class SequenceFlowJourneyElement extends HTMLElementBase {
   static observedAttributes = ["slides", "theme"]
   private index = 0
   private slides: JourneySlide[] = []
+  /** Select a slide externally by id or zero-based index. */
+  selectSlide(target: string | number) {
+    const index = typeof target === "number" ? target : this.slides.findIndex((slide) => slide.id === target)
+    if (!Number.isInteger(index) || index < 0 || index >= this.slides.length) return false
+    this.index = index
+    this.render()
+    this.dispatchEvent(new CustomEvent("sequence-flow:slide-change", { detail: { index, id: this.slides[index].id }, bubbles: true, composed: true }))
+    return true
+  }
 
   connectedCallback() { this.load(); this.render() }
   attributeChangedCallback() { if (this.isConnected) { this.load(); this.render() } }
@@ -32,8 +41,8 @@ export class SequenceFlowJourneyElement extends HTMLElementBase {
     const foot=document.createElement("footer");foot.className="foot"
     const count=document.createElement("span");count.textContent=`Step ${this.index+1} of ${this.slides.length}`
     const controls=document.createElement("div")
-    const prev=document.createElement("button");prev.textContent="Previous";prev.disabled=this.index===0;prev.onclick=()=>{this.index--;this.render()}
-    const next=document.createElement("button");next.textContent="Next";next.disabled=this.index===this.slides.length-1;next.onclick=()=>{this.index++;this.render()}
+    const prev=document.createElement("button");prev.textContent="Previous";prev.disabled=this.index===0;prev.onclick=()=>{this.selectSlide(this.index-1)}
+    const next=document.createElement("button");next.textContent="Next";next.disabled=this.index===this.slides.length-1;next.onclick=()=>{this.selectSlide(this.index+1)}
     controls.append(prev,next);head.append(title,caption);foot.append(count,controls);frame.append(head,chart,foot);root.append(style,frame)
   }
 }

@@ -16,6 +16,7 @@ const MARKER: Record<ArrowHead, string> = {
 }
 
 interface MessageData {
+  index: number
   text: string
   line: ArrowLine
   head: ArrowHead
@@ -38,8 +39,8 @@ export function SeqMessageEdge({
   data,
 }: EdgeProps) {
   const d = data as unknown as MessageData
-  const { hoveredEdge, setHover } = useSequenceHover()
-  const hovered = hoveredEdge === id
+  const { hoveredEdge, setHover, selectedMessageIndex, onMessageSelect } = useSequenceHover()
+  const hovered = hoveredEdge === id || selectedMessageIndex === d.index
   const dimmed = hoveredEdge !== null && !hovered
 
   let path: string
@@ -60,6 +61,7 @@ export function SeqMessageEdge({
 
   const onEnter = () => setHover(id, [d.from, d.to])
   const onLeave = () => setHover(null, [])
+  const select = () => onMessageSelect({ index: d.index, from: d.from, to: d.to, text: d.text })
   const enterDelay = d.animateIn ? `${d.enterDelay ?? 0}ms` : undefined
   const travelMs = d.travelMs ?? 360
   // The label reveals once the traveling dot lands, so it reads as the
@@ -115,12 +117,13 @@ export function SeqMessageEdge({
             }}
             onMouseEnter={onEnter}
             onMouseLeave={onLeave}
+            onClick={select}
           >
             <SeqTooltip text={d.explanation} visible={hovered}>
               <div
                 className={cn(
                   "cursor-default border px-2 py-0.5 text-xs font-medium transition-all",
-                  "border-seq-accent bg-seq-accent text-seq-accent-foreground",
+                  "border-border bg-background text-foreground",
                   hovered && "ring-2 ring-seq-accent/40",
                 )}
               >
@@ -138,12 +141,14 @@ export function SeqMessageEdge({
       {/* Transparent wide path to capture hover along the whole line. */}
       <path
         d={path}
+        className="seq-hit-target"
         fill="none"
         stroke="transparent"
         strokeWidth={22}
         style={{ pointerEvents: "stroke", cursor: "default" }}
         onMouseEnter={onEnter}
         onMouseLeave={onLeave}
+        onClick={select}
       />
     </>
   )

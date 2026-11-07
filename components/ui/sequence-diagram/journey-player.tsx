@@ -35,6 +35,8 @@ function captionsFromChart(chart: string): string[] {
 
 export interface JourneyPlayerProps extends Omit<SequenceLayoutOptions, "animateIn"> {
   slides: JourneySlide[]
+  activeSlideId?: string
+  onSlideChange?: (id: string) => void
   className?: string
   /** Height of the diagram viewport. Defaults to 420px. */
   height?: number
@@ -71,6 +73,8 @@ function dwellTimeFor(slide: JourneySlide, speed: number, override?: number) {
  */
 export function JourneyPlayer({
   slides,
+  activeSlideId,
+  onSlideChange,
   className,
   height = 420,
   columnGap,
@@ -83,7 +87,15 @@ export function JourneyPlayer({
   speed = 1,
 }: JourneyPlayerProps) {
   const [prefersReducedMotion] = useState(() => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
-  const [index, setIndex] = useState(0)
+  const [internalIndex, setInternalIndex] = useState(0)
+  const controlledIndex = activeSlideId == null ? -1 : slides.findIndex((slide) => slide.id === activeSlideId)
+  const index = controlledIndex >= 0 ? controlledIndex : internalIndex
+  const setIndex = (next: number | ((current: number) => number)) => {
+    const value = typeof next === "function" ? next(index) : next
+    const bounded = Math.max(0, Math.min(slides.length - 1, value))
+    if (activeSlideId == null) setInternalIndex(bounded)
+    if (slides[bounded]?.id && bounded !== index) onSlideChange?.(slides[bounded].id)
+  }
   const [playing, setPlaying] = useState(autoPlay && !prefersReducedMotion)
   const [looping, setLooping] = useState(loop)
   const [inspecting, setInspecting] = useState(false)
@@ -133,7 +145,7 @@ export function JourneyPlayer({
   }
 
   useEffect(() => {
-    setIndex(0)
+    setInternalIndex(0)
     setPlaying(autoPlay && !prefersReducedMotion)
     setLooping(loop)
   }, [slides, autoPlay, loop]) // eslint-disable-line react-hooks/exhaustive-deps
