@@ -7,6 +7,35 @@ import type {
   SeqParticipant,
 } from "./types"
 
+/**
+ * Clean common AI-generated formatting artifacts while preserving Mermaid
+ * message content. The input is never treated as HTML or executed.
+ */
+export function normalizeSequenceSource(input: string): string {
+  let source = input.replace(/\r\n?/g, "\n").trim()
+  // A single JSON-quoted string commonly comes back from older model APIs.
+  if (source.startsWith('"') && source.endsWith('"')) {
+    try {
+      const value: unknown = JSON.parse(source)
+      if (typeof value === "string") source = value
+    } catch { /* Preserve original input if malformed. */ }
+  }
+  // Remove only the outer Mermaid/code fence, never code-like message labels.
+  source = source
+    .replace(/^```(?:mermaid|mmd|sequenceDiagram)?[ \t]*\n/i, "")
+    .replace(/\n[ \t]*```[ \t]*$/, "")
+  if (!source.includes("\n") && /\\n|\\r\\n/.test(source)) {
+    source = source.replace(/\\r\\n|\\n/g, "\n")
+  }
+  source = source
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/?(?:p|div|pre|code)(?:\s+[^<>]*?)?\s*>/gi, "\n")
+    .replace(/<\/?(?:span|strong|em|b|i)(?:\s+[^<>]*?)?\s*>/gi, "")
+    .replace(/&(?:gt|lt|amp);/gi, (entity) =>
+      ({ "&gt;": ">", "&lt;": "<", "&amp;": "&" })[entity.toLowerCase()] ?? entity)
+  return source.split("\n").map((line) => line.trim()).filter(Boolean).join("\n")
+}
+
 interface ArrowSpec {
   token: string
   line: ArrowLine
@@ -102,7 +131,7 @@ export function parseSequenceDiagram(input: string): SeqModel {
     return p
   }
 
-  const lines = input.split(/\r?\n/)
+  const lines = normalizeSequenceSource(input).split("\n")
   for (const rawLine of lines) {
     const tip = extractTooltip(rawLine, labelNotes)
     if (tip.consumed) continue

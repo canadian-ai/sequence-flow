@@ -29,6 +29,15 @@ describe("public component API", () => {
     expect(css).toContain("stroke: transparent !important")
   })
 
+  it("keeps long journeys visible when parent panels resize", () => {
+    const diagram = readFileSync(new URL("../components/ui/sequence-diagram/sequence-diagram.tsx", import.meta.url), "utf8")
+    const player = readFileSync(new URL("../components/ui/sequence-diagram/journey-player.tsx", import.meta.url), "utf8")
+    expect(diagram).toContain("ResizeObserver")
+    expect(diagram).toContain("fitDiagramToBounds")
+    expect(diagram).toContain("maxZoom: 1")
+    expect(player).toContain("diagramHeight")
+  })
+
   it("compiles markdown directly to JourneySlide[]", () => {
     const slides = journeySlidesFromMarkdown(
       "## Hello\n```mermaid\nsequenceDiagram\nA->>B: Hi\n```",

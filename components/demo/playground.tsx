@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sequence-diagram"
 
 import { getContrastColor } from "./color-utils"
+import { normalizeSequenceSource } from "@/components/ui/sequence-diagram/parser"
 import { downloadTextFile, minifyMermaid } from "./minify-mermaid"
 import { examples } from "./examples"
 import { CUSTOM_THEME_ID, DEFAULT_THEME, THEMES, type ColorMode, type ThemeColors } from "./themes"
@@ -110,9 +111,9 @@ export function Playground() {
             <span className="font-mono text-xs text-muted-foreground">
               diagram.mmd
             </span>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Paste your own Mermaid
-            </span>
+            <button type="button" onClick={() => setChart(normalizeSequenceSource(chart))} className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground hover:text-foreground" aria-label="Clean up Mermaid source">
+              Clean up pasted flow
+            </button>
           </div>
           <textarea
             value={chart}
