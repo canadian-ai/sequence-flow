@@ -1,6 +1,26 @@
 // Public, non-confidential integration test. Never log the private deletion token.
-const endpoint = "https://sequence-flow-journeys.icy-dream-7fdb.workers.dev/mcp";
-const api = "https://sequence-flow-journeys.icy-dream-7fdb.workers.dev/v1/journeys/";
+// This test creates and revokes a real journey. Run only against a dedicated test environment.
+// Explicit opt-in prevents CI from writing to production by accident.
+if (process.env.SEQUENCE_FLOW_ALLOW_WRITE_SMOKE !== "true") {
+  console.log("Skipping write smoke test (set SEQUENCE_FLOW_ALLOW_WRITE_SMOKE=true for a dedicated test environment)");
+  process.exit(0);
+}
+const baseUrl = process.env.SEQUENCE_FLOW_TEST_BASE_URL;
+if (!baseUrl) throw new Error("SEQUENCE_FLOW_TEST_BASE_URL is required for write smoke tests");
+const target = new URL(baseUrl);
+if (target.protocol !== "https:" || target.username || target.password || target.search || target.hash) {
+  throw new Error("Test endpoint must be an HTTPS origin");
+}
+const allowedHost = process.env.SEQUENCE_FLOW_TEST_ALLOWED_HOST;
+if (!allowedHost || target.hostname !== allowedHost) {
+  throw new Error("Test endpoint hostname must match SEQUENCE_FLOW_TEST_ALLOWED_HOST");
+}
+if (target.hostname.endsWith(".workers.dev") || target.hostname === "sequence-flow.canadian-ai.app") {
+  throw new Error("Production and raw workers.dev endpoints are prohibited for write smoke tests");
+}
+const origin = target.origin;
+const endpoint = origin + "/mcp";
+const api = origin + "/v1/journeys/";
 async function rpc(id,method,params={}) {
   const response = await fetch(endpoint,{
     method:"POST",
@@ -23,7 +43,7 @@ async function main(){
   }});
   if(output.isError)throw new Error("Publishing failed: "+output.content[0].text);
   const published=JSON.parse(output.content[0].text);
-  if(!published.free || !published.url?.startsWith("https://sequence-flow.canadian-ai.app/journey?slug=") ||
+  if(!published.free || !published.url?.startsWith(origin + "/journey?slug=") ||
      !published.deleteToken || !published.expiresAt)throw new Error("Unexpected publishing result");
   let readOk=false;
   for(let attempt=0;attempt<5;attempt++){
