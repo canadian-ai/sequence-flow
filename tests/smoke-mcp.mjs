@@ -43,7 +43,7 @@ async function main(){
   }});
   if(output.isError)throw new Error("Publishing failed: "+output.content[0].text);
   const published=JSON.parse(output.content[0].text);
-  if(!published.free || !published.url?.startsWith("https://sequence-flow.canadian-ai.app/journey?slug=") ||
+  if(!published.free || !published.url?.startsWith(origin + "/journey?slug=") ||
      !published.deleteToken || !published.expiresAt)throw new Error("Unexpected publishing result");
   let readOk=false;
   for(let attempt=0;attempt<5;attempt++){
