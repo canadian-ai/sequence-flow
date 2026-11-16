@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import { BaseEdge, EdgeLabelRenderer, type EdgeProps } from "@xyflow/react"
 
 import { cn } from "@/lib/utils"
@@ -68,6 +69,13 @@ export function SeqMessageEdge({
   // message "arriving" rather than appearing alongside the line's own pop-in.
   const labelDelay = d.animateIn ? `${(d.enterDelay ?? 0) + travelMs}ms` : undefined
 
+  const motionRef = useRef<SVGAnimateMotionElement>(null)
+  useEffect(() => {
+    if (!d.animateIn || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    const timer = window.setTimeout(() => motionRef.current?.beginElement(), d.enterDelay ?? 0)
+    return () => window.clearTimeout(timer)
+  }, [d.animateIn, d.enterDelay, path])
+
   return (
     <>
       <BaseEdge
@@ -101,9 +109,10 @@ export function SeqMessageEdge({
           }}
         >
           <animateMotion
+            ref={motionRef}
             path={path}
             dur={`${travelMs}ms`}
-            begin={`${d.enterDelay ?? 0}ms`}
+            begin="indefinite"
             fill="freeze"
           />
         </circle>
