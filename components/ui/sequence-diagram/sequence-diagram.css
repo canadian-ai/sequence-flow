@@ -39,9 +39,8 @@
  *
  * 1. `seq-edge-pop` snaps the line/label to fully visible the instant the
  *    message's turn arrives — no fade, so it never reads as sluggish.
- * 2. `seq-edge-dot` flies a small semicircle "packet" along that same path
- *    (via `offset-path`, set inline per-edge in edges.tsx since each path is
- *    unique) from source to target, arriving right as the line pops in.
+ * 2. `seq-edge-dot` flies a small circular "packet" along that same path
+ *    (via native SVG animateMotion using the same path geometry) from source to target, arriving right as the line pops in.
  *    This is the primary motion cue — it makes the arrival feel immediate
  *    rather than the previous plain opacity fade.
  */
@@ -60,23 +59,20 @@
 
 @keyframes seq-edge-travel {
   0% {
-    offset-distance: 0%;
-    opacity: 1;
+    opacity: 0;
   }
+  12% { opacity: 1; }
   80% {
-    offset-distance: 80%;
     opacity: 1;
   }
   100% {
-    offset-distance: 100%;
     opacity: 0;
   }
 }
 
 .seq-edge-dot {
-  offset-distance: 0%;
   animation-name: seq-edge-travel;
-  animation-timing-function: ease-in;
+  animation-timing-function: linear;
   animation-fill-mode: both;
 }
 
