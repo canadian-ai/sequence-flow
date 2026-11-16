@@ -90,17 +90,23 @@ export function SeqMessageEdge({
         // message's own path the instant it appears — reads as motion
         // in-flight rather than a plain (and, per feedback, sluggish-feeling)
         // fade. Its arrival is what visually completes the edge.
-        <path
+        <circle
           className="seq-edge-dot"
-          d="M -4 0 A 4 4 0 1 0 4 0 A 4 4 0 1 0 -4 0 Z"
+          r={4}
           fill="var(--seq-accent)"
           style={{
-            offsetPath: `path("${path}")`,
-            offsetRotate: "auto",
             animationDuration: `${travelMs}ms`,
             animationDelay: enterDelay,
+            pointerEvents: "none",
           }}
-        />
+        >
+          <animateMotion
+            path={path}
+            dur={`${travelMs}ms`}
+            begin={`${d.enterDelay ?? 0}ms`}
+            fill="freeze"
+          />
+        </circle>
       ) : null}
       <EdgeLabelRenderer>
         {d.text ? (
