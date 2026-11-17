@@ -43,8 +43,8 @@ svg.edges{position:absolute;left:0;top:0;overflow:visible;z-index:4;pointer-even
 .msg-line.dim{opacity:.35}
 .msg-line.hl{stroke-width:2.6}
 .hit{stroke:transparent;stroke-width:22;fill:none;pointer-events:stroke;cursor:default}
-.dot-fly{position:absolute;left:0;top:0;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;background:var(--accent);opacity:0;z-index:7;pointer-events:none}
-.dot-fly.run{animation:fly var(--travel,650ms) cubic-bezier(.4,0,.2,1) forwards;animation-delay:var(--delay,0ms)}
+.dot-fly{fill:var(--accent);opacity:0;pointer-events:none}
+.dot-fly.run{animation:fly var(--travel,650ms) linear forwards;animation-delay:var(--delay,0ms)}
 .msg-label{position:absolute;transform:translate(-50%,-50%);z-index:8;background:var(--accent);color:var(--accent-fg);padding:3px 8px;font:600 11px ui-sans-serif,system-ui,sans-serif;white-space:nowrap;cursor:default;transition:opacity 120ms,box-shadow 120ms}
 .msg-label.dim{opacity:.4}
 .msg-label.hl{box-shadow:0 0 0 2px color-mix(in oklab,var(--accent) 40%,transparent)}
@@ -62,7 +62,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadein{to{opacity:1}}
-@keyframes fly{0%{offset-distance:0%;opacity:0}12%{opacity:1}88%{opacity:1}100%{offset-distance:100%;opacity:0}}
+@keyframes fly{0%{opacity:0}12%{opacity:1}88%{opacity:1}100%{opacity:0}}
 .anim-rise{opacity:0;animation:rise .45s ease forwards}
 .anim-fade{opacity:0;animation:fadein .28s ease forwards}
 @media (max-width:760px){.stage-wrap{height:440px}}
@@ -82,7 +82,7 @@ const k=raw.indexOf('%%');if(k<0)return {line:raw.trim()};
 const before=raw.slice(0,k).trim(),body=raw.slice(k+2).trim();
 const pm=body.match(/^tooltip\\s+([^:]+):\\s*(.+)$/i);
 if(pm)return {line:before,ptip:{name:pm[1].trim().toLowerCase(),text:pm[2].trim()}};
-let exp,dur;body.split('|').forEach(part=>{const m=part.trim().match(/^(tooltip|duration)\\s*:\\s*(.+)$/i);if(m){if(m[1].toLowerCase()==='tooltip')exp=m[2].trim();else{const ms=parseInt(m[2],10);if(ms>0)dur=ms;}}});
+let exp,dur;body.split('|').forEach(part=>{const m=part.trim().match(/^(tooltip|duration)\\s*:\\s*(.+)$/i);if(m){if(m[1].toLowerCase()==='tooltip')exp=m[2].trim();else{const ms=parseInt(m[2],10);if(Number.isFinite(ms)&&ms>0)dur=Math.min(ms,30000);}}});
 return {line:before,explanation:exp,durationMs:dur};
 }
 function parse(input){
@@ -111,7 +111,7 @@ function layout(model){
 const index=new Map(model.participants.map((p,n)=>[p.id,n]));
 const xOf=id=>MARGIN_X+ACTOR_W/2+(index.get(id)||0)*COL_GAP;
 const hasBoxes=model.boxes.length>0,headY=MARGIN_TOP+(hasBoxes?BOX_LABEL_H:0),llTop=headY+ACTOR_H;
-const messages=[],notes=[],acts=[],stacks={};let y=llTop+FIRST;
+const messages=[],notes=[],acts=[],stacks=Object.create(null);let y=llTop+FIRST;
 const settle=model.participants.length*STAGGER+SETTLE_PAD;let cursor=settle;
 const push=(pid,start)=>{(stacks[pid]=stacks[pid]||[]).push({start:start,depth:stacks[pid].length});};
 const pop=(pid,end)=>{const s=stacks[pid]&&stacks[pid].pop();if(s)acts.push({pid:pid,top:s.start,height:Math.max(end-s.start,18),depth:s.depth});};
@@ -132,7 +132,7 @@ function apply(){canvas.style.transform='translate('+view.tx+'px,'+view.ty+'px) 
 function fit(){const r=stage.getBoundingClientRect(),pad=26;const scale=Math.min((r.width-pad*2)/graph.width,(r.height-pad*2)/graph.height,1.3);view.scale=Math.max(.2,scale);view.tx=(r.width-graph.width*view.scale)/2;view.ty=(r.height-graph.height*view.scale)/2;apply();}
 function zoom(f){const r=stage.getBoundingClientRect(),cx=r.width/2,cy=r.height/2,old=view.scale;view.scale=Math.max(.2,Math.min(2,old*f));view.tx=cx-(cx-view.tx)*(view.scale/old);view.ty=cy-(cy-view.ty)*(view.scale/old);apply();}
 function renderDiagram(chart){
-canvas.innerHTML='';tip.classList.remove('show');
+canvas.replaceChildren();tip.classList.remove('show');
 const model=parse(chart);
 if(!model.participants.length)return;
 graph=layout(model);
@@ -144,7 +144,7 @@ if(!b.ids.length)return;const xs=b.ids.map(graph.xOf),left=Math.min.apply(null,x
 const g=el('div','grp',{left:left+'px',top:MARGIN_TOP+'px',width:(right-left)+'px',height:(graph.height-MARGIN_TOP*1.5)+'px'});
 if(b.label)g.appendChild(el('span','grp-label',null,b.label));canvas.appendChild(g);
 });
-const llEls={},actorEls={};
+const llEls=Object.create(null),actorEls=Object.create(null);
 model.participants.forEach(p=>{
 const x=graph.xOf(p.id);
 const ll=el('div','ll',{left:x+'px',top:graph.llTop+'px',height:graph.llHeight+'px'});llEls[p.id]=ll;canvas.appendChild(ll);
@@ -176,7 +176,7 @@ if(m.head!=='none')path.setAttribute('marker-end','url(#'+m.head+')');
 if(!reduce)path.style.animationDelay=m.enterDelay+'ms';
 svg.appendChild(path);lineEls[n]=path;
 const hit=document.createElementNS(NS,'path');hit.setAttribute('d',d);hit.setAttribute('class','hit');hit.addEventListener('mouseenter',()=>setHover(n));hit.addEventListener('mouseleave',()=>setHover(null));svg.appendChild(hit);
-if(!reduce){const fly=el('div','dot-fly',{offsetPath:'path("'+d+'")'});fly.style.setProperty('--travel',TRAVEL+'ms');fly.style.setProperty('--delay',m.enterDelay+'ms');canvas.appendChild(fly);requestAnimationFrame(()=>fly.classList.add('run'));}
+if(!reduce){const fly=document.createElementNS(NS,'circle');fly.setAttribute('r','4.5');fly.setAttribute('class','dot-fly run');fly.style.setProperty('--travel',TRAVEL+'ms');fly.style.setProperty('--delay',m.enterDelay+'ms');const motion=document.createElementNS(NS,'animateMotion');motion.setAttribute('path',d);motion.setAttribute('dur',TRAVEL+'ms');motion.setAttribute('begin',m.enterDelay+'ms');motion.setAttribute('fill','freeze');fly.appendChild(motion);svg.appendChild(fly);}
 if(m.text){const lx=m.self?x1+62:(x1+x2)/2,ly=m.self?(m.y1+m.y2)/2:m.y1;const lab=el('div','msg-label anim-fade',{left:lx+'px',top:ly+'px',animationDelay:(reduce?0:m.enterDelay+TRAVEL)+'ms'},m.text);lab.addEventListener('mouseenter',()=>setHover(n));lab.addEventListener('mouseleave',()=>setHover(null));canvas.appendChild(lab);labelEls[n]=lab;}
 });
 fit();
@@ -186,7 +186,7 @@ const s=slides[i];
 $('title').textContent=s.title||data.title;
 $('caption').textContent=s.caption||'';
 $('count').textContent='Step '+(i+1)+' of '+slides.length;
-const st=$('steps');st.innerHTML='';
+const st=$('steps');st.replaceChildren();
 slides.forEach((_,n)=>{const b=document.createElement('button');b.className='dot';b.setAttribute('aria-label','Go to step '+(n+1));b.setAttribute('aria-current',String(n===i));b.onclick=()=>{i=n;renderStep();};st.appendChild(b);});
 $('live').textContent='Showing '+(s.title||'step '+(i+1));
 renderDiagram(s.chart);
@@ -203,12 +203,16 @@ stage.addEventListener('pointermove',e=>{if(!drag)return;view.tx=drag.tx+e.clien
 stage.addEventListener('pointerup',()=>{drag=null;stage.classList.remove('drag');});
 stage.addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey){e.preventDefault();zoom(e.deltaY<0?1.08:1/1.08);}},{passive:false});
 addEventListener('resize',fit);
-addEventListener('keydown',e=>{if(e.key==='ArrowRight')$('next').click();if(e.key==='ArrowLeft')$('prev').click();if(e.key===' '){e.preventDefault();$('play').click();}});
+addEventListener('keydown',e=>{if(e.target instanceof HTMLElement && (e.target.closest('button,input,textarea,select,[contenteditable]')))return;if(e.key==='ArrowRight')$('next').click();if(e.key==='ArrowLeft')$('prev').click();if(e.key===' '){e.preventDefault();$('play').click();}});
 renderStep();
 setPlaying(!reduce);
 })();`
 
 export function createStandaloneJourneyHtml(slides: JourneySlide[], options: JourneyHtmlOptions = {}) {
+  if (!Array.isArray(slides) || slides.length < 1 || slides.length > 100) throw new RangeError("Expected 1–100 journey slides")
+  for (const slide of slides) {
+    if (!slide || typeof slide.chart !== "string" || slide.chart.length > 25000 || slide.chart.split(/\r?\n/).length > 500) throw new RangeError("Invalid or oversized journey chart")
+  }
   const title = options.title ?? slides[0]?.title ?? "Sequence Flow journey"
   const payload = safeJson({ title, slides })
   const dark = options.theme === "dark"
